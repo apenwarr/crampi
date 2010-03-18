@@ -1,6 +1,5 @@
 #!/usr/bin/env cxpython
 import sys
-from pythoncom import IID_IUnknown
 from win32com.mapi import mapi, mapitags
 from win32com.mapi.mapitags import *
 
@@ -137,11 +136,11 @@ class Container(Props):
     def children(self):
         return Table(Container, self.h.GetHierarchyTable(mapi.MAPI_UNICODE))
 
-    def messages(self):
-        return Table(Message, self.h.GetContentsTable(mapi.MAPI_UNICODE))
-
     def child(self, entryid):
         return Container(self._open(entryid))
+
+    def messages(self):
+        return Table(Message, self.h.GetContentsTable(mapi.MAPI_UNICODE))
 
     def message(self, entryid):
         return Message(self._open(entryid))
@@ -163,6 +162,10 @@ class Session(Mapi):
             flags |= mapi.MAPI_USE_DEFAULT
         h = mapi.MAPILogonEx(hwnd, profile or '', password or '', flags)
         Mapi.__init__(self, h)
+        # FIXME: avoid invalid memory access somewhere in win32com by
+        # holding a reference to all the stores.  Don't know where that invalid
+        # reference comes from, though...
+        self.allstores = [self.store(row[PR_ENTRYID]) for row in self.stores()]
 
     def stores(self):
         return Table(Store, self.h.GetMsgStoresTable(0))
@@ -171,21 +174,13 @@ class Session(Mapi):
         return Store(self.h.OpenMsgStore(0, entryid, None,
                         mapi.MDB_NO_DIALOG | mapi.MAPI_BEST_ACCESS))
 
+    def children(self):
+        return self.stores()
+
+    def child(self, entryid):
+        return self.store(entryid).root()
 
 
-sess = Session()
-stores = sess.stores()
-for row in stores.iter(PR_ENTRYID, PR_DISPLAY_NAME_W, PR_DEFAULT_STORE):
-    print row
-    print '---'
-for (eid,name,default) in stores.iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
-                                      PR_DEFAULT_STORE):
-    if not default:
-        break
-
-# unpack the row and open the message store
-store = sess.store(eid)
-root = store.root()
 
 def show_cont(indent, c):
     for eid,name,subf in c.children().iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
@@ -194,4 +189,6 @@ def show_cont(indent, c):
         if subf:
             show_cont(indent+'    ', c.child(eid))
 
-show_cont('', root)
+sess = Session()
+stores = [sess.store(row[PR_ENTRYID]) for row in sess.stores()]
+show_cont('', sess)
