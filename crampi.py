@@ -1,7 +1,8 @@
 #!/usr/bin/env cxpython
-import sys
+import sys, fnmatch
 from win32com.mapi import mapi, mapitags
 from win32com.mapi.mapitags import *
+import options
 
 def log(s):
     sys.stdout.flush()
@@ -34,9 +35,28 @@ class Mapi:
 
     def _find(self, table, name):
         for (eid, ename) in table.iter(PR_ENTRYID, PR_DISPLAY_NAME_W):
-            if ename == name or eid == name:
+            if eid == name or fnmatch.fnmatch(ename, name):
                 return eid
 
+class FindableMixin:
+    # Note: you must define children() in the child class for this to work
+    def find(self, name):
+        eid = self._find(self.children(), name)
+        if not eid:
+            try:
+                myname = self[PR_DISPLAY_NAME_W]
+            except:
+                myname = '(top)'
+            raise Exception('no %r in %r' % (name, myname))
+        return self.child(eid)
+
+    def recursive_find(self, name):
+        names = name.split('/')
+        e = self
+        for n in names:
+            e = e.find(n)
+        return e
+        
 
 class BaseProps:
     def __init__(self, pclass, proplist):
@@ -50,6 +70,12 @@ class BaseProps:
             pidstr = mapitags.__dict__.get(propid)
             self.loadprops(pidstr or propid)
         return self.propcache[propid]
+
+    def get(self, propid, default = None):
+        try:
+            return self.__getitem__(propid)
+        except KeyError:
+            return default
 
     def __repr__(self):
         return '%s {\n  %s\n}' \
@@ -125,14 +151,14 @@ class Table(Mapi):
             rows = self.h.QueryRows(1024, 0)
             for row in rows:
                 yield BaseProps(self.pclass, row)
-            if len(rows) < 1024:
+            if not rows:
                 break
 
     def __iter__(self):
         return self.iter()
 
 
-class Container(Props):
+class Container(Props,FindableMixin):
     def children(self):
         return Table(Container, self.h.GetHierarchyTable(mapi.MAPI_UNICODE))
 
@@ -154,7 +180,7 @@ class Store(Props):
         return self.child(self[PR_IPM_SUBTREE_ENTRYID])
 
 
-class Session(Mapi):
+class Session(Mapi,FindableMixin):
     def __init__(self, hwnd = 0, profile = None, password = None):
         mapi.MAPIInitialize((mapi.MAPI_INIT_VERSION,0))
         flags = mapi.MAPI_EXTENDED
@@ -165,7 +191,8 @@ class Session(Mapi):
         # FIXME: avoid invalid memory access somewhere in win32com by
         # holding a reference to all the stores.  Don't know where that invalid
         # reference comes from, though...
-        self.allstores = [self.store(row[PR_ENTRYID]) for row in self.stores()]
+        self.allstores = [self.store(row[PR_ENTRYID])
+                          for row in self.stores().iter(PR_ENTRYID)]
 
     def stores(self):
         return Table(Store, self.h.GetMsgStoresTable(0))
@@ -182,13 +209,40 @@ class Session(Mapi):
 
 
 
-def show_cont(indent, c):
-    for eid,name,subf in c.children().iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
-                                           PR_SUBFOLDERS):
-        print '%s%s' % (indent, name)
-        if subf:
-            show_cont(indent+'    ', c.child(eid))
 
 sess = Session()
-stores = [sess.store(row[PR_ENTRYID]) for row in sess.stores()]
-show_cont('', sess)
+stores = [sess.store(row[PR_ENTRYID])
+          for row in sess.stores().iter(PR_ENTRYID)]
+
+optspec = """
+crampi [options] [folders...]
+--
+F,folders   list subfolders of the given folders
+L,list      list the messages in the given folders
+"""
+o = options.Options('crampi', optspec)
+(opt, flags, extra) = o.parse(sys.argv[1:])
+
+if not (opt.folders or opt.list):
+    o.fatal('must provide -F or -L')
+
+if opt.folders:
+    def show_cont(indent, c):
+        for eid,name,subf in c.children().iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
+                                               PR_SUBFOLDERS):
+            print '%s%s' % (indent, name)
+            if subf:
+                show_cont(indent+'    ', c.child(eid))
+    if not extra:
+        show_cont('', sess)
+    else:
+        for name in extra:
+            show_cont('', sess.recursive_find(name))
+
+if opt.list:
+    if not extra:
+        o.fatal('must provide a folder name to list')
+    for name in extra:
+        f = sess.recursive_find(name)
+        for m in f.messages().iter(PR_NORMALIZED_SUBJECT, PR_TITLE_W):
+            print repr(m.get(PR_NORMALIZED_SUBJECT+1000, m))
