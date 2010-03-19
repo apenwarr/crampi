@@ -2,11 +2,7 @@
 import sys
 from lib import options, cmapi
 from lib.cmapitags import *
-
-def log(s):
-    sys.stdout.flush()
-    sys.stderr.write(s)
-    sys.stderr.flush()
+from lib.helpers import *
 
 sess = cmapi.Session()
 stores = [sess.store(row[PR_ENTRYID])
