@@ -1,7 +1,7 @@
 # a lame substitute for what git would do if we had it, but in sqlite form.
 # at least it's easier than rewriting git in python, or installing git on
 # Windows.
-import sqlite3, sha, pickle
+import sqlite3, sha, yaml, StringIO, uuid
 from lib.helpers import *
 
 _bin = sqlite3.Binary
@@ -15,12 +15,11 @@ def _create_v1(db):
     db.execute('create table Schema (version)')
     db.execute('insert into Schema default values')
     db.execute('create table Blobs (blobid primary key, zblob)')
-    db.execute('create table Uuids (uuid integer primary key autoincrement)')
-    db.execute('create table Trees (treeid, uuid, blobid)')
-    db.execute('create index Trees_pk on Trees (treeid, uuid)')
+    db.execute('create table Trees (treeid, uuid, blobid, ' +
+               '  primary key (treeid,uuid))')
     db.execute('create table Commits (' +
                '  commitid integer primary key autoincrement, ' +
-               '  refname, merged_commit, localids, treeid)')
+               '  refname, treeid, localids_blobid, merged_commit)')
 
 _schema = [(1, _create_v1)]
 
@@ -55,20 +54,20 @@ class GitDb:
     def blob_set(self, content):
         if isinstance(content, unicode):
             content = content.encode('utf-8')
-        sha1 = sha.sha('blob %d\0%s' % (len(content), content)).digest()
+        sha1 = sha.sha('blob %d\0%s' % (len(content), content)).hexdigest()
         self.db.execute('insert or replace into Blobs (blobid,zblob) ' +
                         ' values (?,?)',
-                        [_bin(sha1), _bin(content)])
+                        [sha1, _bin(content)])
         return sha1
 
     def blob(self, sha1):
         v = _selectone(self.db, 'select zblob from Blobs where blobid=?',
-                       [_bin(sha1)])
+                       [sha1])
         if v:
             return str(v)
 
     def uuid_new(self):
-        return self.db.execute('insert into Uuids default values').lastrowid
+        return str(uuid.uuid4())
 
     def _tree_encode(self, treedict):
         # git-style tree object
@@ -79,30 +78,30 @@ class GitDb:
 
     def tree_set(self, treedict):
         enc = self._tree_encode(treedict)
-        sha1 = sha.sha('tree %d\0%s' % (len(enc), enc)).digest()
+        sha1 = sha.sha('tree %d\0%s' % (len(enc), enc)).hexdigest()
         self.db.executemany('insert or replace into Trees ' +
                             '  (treeid, uuid, blobid)' +
                             '  values (?,?,?)',
-                            ((_bin(sha1), uuid, _bin(blobid)) 
+                            ((sha1, uuid, blobid)
                              for uuid,blobid in treedict.iteritems()))
         return sha1
 
     def tree(self, treeid):
         treedict = {}
         for uuid,blobid in self.db.execute('select uuid, blobid from Trees ' +
-                                           ' where treeid=?', [_bin(treeid)]):
+                                           ' where treeid=?', [treeid]):
             treedict[uuid] = str(blobid)
         return treedict
 
     def commit_set(self, refname, treeid, localids, merged_commit = None):
         # not at all the git format, unlike the trees and blobs
-        lids = pickle.dumps([(lid,uuid) for lid,uuid in sorted(localids)])
+        lids = yaml.safe_dump(dict(localids))
+        lb = self.blob_set(lids)
         return self.db.execute(
                 'insert into Commits ' +
-                '  (refname, treeid, localids, merged_commit) ' +
+                '  (refname, treeid, localids_blobid, merged_commit) ' +
                 '  values (?,?,?,?)',
-                [refname, _bin(treeid), _bin(lids),
-                 merged_commit and _bin(merged_commit) or None]).lastrowid
+                [refname, treeid, lb, merged_commit]).lastrowid
 
     def commitid_latest(self, refname):
         return _selectone(self.db,
@@ -110,8 +109,10 @@ class GitDb:
                           '  where refname=?', [refname])
 
     def commit(self, commitid):
-        for r,t,lids,m in self.db.execute('select refname, treeid, ' +
-                                   '  localids, merged_commit from Commits ' +
+        for r,t,lb,m in self.db.execute('select refname, treeid, ' +
+                                   '  localids_blobid, merged_commit ' +
+                                   '  from Commits ' +
                                    '  where commitid=?', [commitid]):
-            localids = pickle.loads(lids)
+            lids = self.blob(lb)
+            localids = yaml.safe_load(StringIO.StringIO(lids))
             return r,str(t),localids,m

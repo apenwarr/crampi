@@ -25,8 +25,8 @@ def test_gitdb():
     td2 = g.tree(t1)
     WVPASSEQ(sorted(treedict.items()), sorted(td2.items()))
 
-    l1 = [(9,u1), (10,u1b), (11,u2)]
-    l2 = [(1,u1), (2, u1b), (3,u2)]
+    l1 = { 9:u1, 10:u1b, 11:u2 }
+    l2 = { 1:u1, 2:u1b, 3:u2 }
     c1 = g.commit_set('one', t1, l1)
     c1b = g.commit_set('one', t1, l1)
     c2 = g.commit_set('two', t1, l2)
@@ -38,7 +38,8 @@ def test_gitdb():
     WVPASSEQ(('one', t1, l1, None), g.commit(c1))
     WVPASSEQ(('one', t1, l1, None), g.commit(c1b))
     WVPASSEQ(('two', t1, l2, None), g.commit(c2))
-    for r in g.db.execute('select max(commitid) from Commits where refname=?', ['one']):
+    for r in g.db.execute('select max(commitid) from Commits where refname=?',
+                          ['one']):
         print repr(r)
     WVPASSEQ(g.commitid_latest('one'), c1b)
     WVPASSEQ(g.commitid_latest('two'), c2)
