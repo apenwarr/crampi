@@ -55,11 +55,11 @@ class FindableMixin:
         
 
 class BaseProps:
-    def __init__(self, pclass, proplist):
+    def __init__(self, pclass, propswanted, proplist):
         self.proporder = []
         self.propcache = {}
         self.pclass = pclass
-        self.importprops(proplist)
+        self.importprops(propswanted, proplist)
 
     def __getitem__(self, propid):
         if not propid in self.propcache:
@@ -106,27 +106,29 @@ class BaseProps:
     def loadprops(self, *propids):
         pass
 
-    def _addprop(self, k, v):
-        self.propcache[k] = v
+    def _addprop(self, k, kresult, v):
+        if PROP_TYPE(kresult) == PT_ERROR:
+            self.propcache[k] = None
+        else:
+            self.propcache[k] = v
         if not k in self.proporder:
             self.proporder.append(k)
 
-    def importprops(self, proplist):
-        for k,v in proplist:
-            self._addprop(k,v)
+    def importprops(self, propswanted, proplist):
+        for k,(kresult,v) in zip(propswanted,proplist):
+            self._addprop(k, kresult, v)
 
 
 
 class Props(Mapi,BaseProps):
     def __init__(self, handle):
         Mapi.__init__(self, handle)
-        BaseProps.__init__(self, self.__class__, [])
+        BaseProps.__init__(self, self.__class__, [], [])
         self.propcache = {}
 
     def loadprops(self, *propids):
         ret, props = self.h.GetProps(propids)
-        for k,v in props:
-            self.propcache[k] = v
+        self.importprops(propids, props)
 
 
 class Message(Props):
@@ -146,7 +148,7 @@ class Table(Mapi):
         while 1:
             rows = self.h.QueryRows(1024, 0)
             for row in rows:
-                yield BaseProps(self.pclass, row)
+                yield BaseProps(self.pclass, cols, row)
             if not rows:
                 break
 
