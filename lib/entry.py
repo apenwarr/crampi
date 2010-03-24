@@ -55,8 +55,13 @@ class Entries:
                               merged_commit = merged_commit)
 
 
+def _load_tree(gdb, treeid):
+    for (uuid,blobid) in gdb.tree(treeid).iteritems():
+        d = yaml.safe_load(gdb.blob(blobid))
+        yield Entry(None,uuid,d)
+
+
 def load_tree(gdb, treeid):
-    blobs = gdb.tree(treeid)
-    return Entries((None,uuid,d) for (uuid,d) in blobs.iteritems())
+    return Entries(_load_tree(gdb, treeid))
 
 
