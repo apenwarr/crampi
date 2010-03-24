@@ -5,10 +5,10 @@ all:
 	@echo ' or: make clean'
 	
 runtests:
-	./wvtest.py $(wildcard t/*.py)
+	./wvtest.py t/tgitdb.py $(wildcard t/*.py)
 	
 test:
 	./wvtestrun $(MAKE) runtests
 
 clean:
-	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp
+	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp *.sqlite3
