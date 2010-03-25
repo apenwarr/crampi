@@ -68,3 +68,4 @@ def main(argv):
     el.assign_missing_uuids(g)
     print el.save_commit(g, opt.branch)
     g.flush()
+ 
