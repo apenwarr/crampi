@@ -1,7 +1,7 @@
 # a lame substitute for what git would do if we had it, but in sqlite form.
 # at least it's easier than rewriting git in python, or installing git on
 # Windows.
-import sqlite3, sha, yaml, StringIO, uuid
+import sqlite3, hashlib, yaml, StringIO, uuid
 from lib.helpers import *
 
 _bin = sqlite3.Binary
@@ -52,7 +52,7 @@ class GitDb:
     def _blob_set(self, type, content):
         if isinstance(content, unicode):
             content = content.encode('utf-8')
-        sha1 = sha.sha('blob %d\0%s' % (len(content), content)).hexdigest()
+        sha1 = hashlib.sha1('blob %d\0%s' % (len(content), content)).hexdigest()
         self.db.execute('insert or replace into Blobs (blobid,blob) ' +
                         ' values (?,?)',
                         [sha1, _bin(content)])
