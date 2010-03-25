@@ -5,6 +5,7 @@ optspec = """
 crampi mapi-export <folder name>
 --
 d,gitdb=   name of gitdb sqlite3 database file
+b,branch=  name of git branch to use for these files
 """
 
 _mapping = {
@@ -55,19 +56,16 @@ def main(argv):
 
     if not opt.gitdb:
         opt.gitdb = 'gitdb.sqlite3'
+    if not opt.branch:
+        opt.branch = 'mapi-default'
 
     g = gitdb.GitDb(opt.gitdb)
     sess = cmapi.Session()
     f = sess.recursive_find(fname)
     el = entry.Entries(entries(f))
     
-    el.uuids_from_commit(g, 'mapi')
+    el.uuids_from_commit(g, opt.branch)
     el.assign_missing_uuids(g)
-    t = el.save_tree(g)
-    print t
-    el2 = entry.load_tree(g, t)
-    t2 = el.save_tree(g)
-    assert(t == t2)
-    print el.save_commit(g, 'mapi')
+    print el.save_commit(g, opt.branch)
     g.flush()
     

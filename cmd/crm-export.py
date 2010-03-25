@@ -5,6 +5,7 @@ optspec = """
 crampi crm-export [-d db.sqlite3] crmdb.sqlite3
 --
 d,gitdb=   name of gitdb sqlite3 database file
+b,branch=  name of git branch to use for these files
 """
 
 def entries(s):
@@ -56,22 +57,14 @@ def main(argv):
 
     if not opt.gitdb:
         opt.gitdb = 'gitdb.sqlite3'
+    if not opt.branch:
+        opt.branch = 'crm-default'
 
     s = sqlite3.connect(opt.crmdb)
     el = entry.Entries(entries(s))
-    #for e in entries(s):
-    #    print yaml.safe_dump((e.lid,e.d), default_flow_style=False)
     
     g = gitdb.GitDb(opt.gitdb)
-    el.uuids_from_commit(g, opt.crmdb)
+    el.uuids_from_commit(g, opt.branch)
     el.assign_missing_uuids(g)
-    t = el.save_tree(g)
-    print t
-    el2 = entry.load_tree(g, t)
-    t2 = el.save_tree(g)
-    assert(t == t2)
-    print el.save_commit(g, opt.crmdb)
-    #print yaml.safe_dump_all(entries(), width=40)
-    #print len(list(entries()))
-    #list(entries())
+    print el.save_commit(g, opt.branch)
     g.flush()
