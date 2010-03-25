@@ -48,17 +48,6 @@ def test_save_load_entries():
 
 
 @wvtest
-def test_list_compare():
-    cur = [1,2,3,4,5]
-    a = [3,4,5,6,7]
-    b = [2,3,4,8]
-    (same, added, deleted) = entry._compare(cur,a,b)
-    WVPASSEQ(same, set([1,2,3,4]))
-    WVPASSEQ(added, set([8]))
-    WVPASSEQ(deleted, set([5]))
-
-
-@wvtest
 def test_merge_entries():
     gdb = gitdb.GitDb('test.db.tmp')
     base = Entries([])
@@ -69,16 +58,7 @@ def test_merge_entries():
     b1 = Entries([
         Entry('b1', 'u3', dict(a=111, b=222, c=333, d=[dict(x=777, y=999)])),
     ])
-    base.reindex()
-    a1.reindex()
-    b1.reindex()
-    (same, added, deleted) = entry._compare(b1.uuids.keys(),
-                                            base.uuids.keys(),
-                                            a1.uuids.keys())
-    WVPASSEQ(same, set(['u3']))
-    WVPASSEQ(added, set(['u1', 'u2']))
-    WVPASSEQ(deleted, set([]))
-    b2 = entry.merge(b1, base, a1)
+    b2 = Entries(entry.simple_merge(b1, base, a1))
     WVPASSEQ(len(b2.entries), 3)
     b2s = list(sorted(b2.entries, key=lambda i: i.uuid))
     WVPASSEQ([e.uuid for e in b2s], ['u1', 'u2', 'u3'])
@@ -88,15 +68,7 @@ def test_merge_entries():
     b2.entries[0].d['a'] = 1.5
     WVPASSNE(b2.entries[0].d, b1.entries[0].d)
 
-    b2.reindex()
-    (same, added, deleted) = entry._compare(a1.uuids.keys(),
-                                            base.uuids.keys(),
-                                            b2.uuids.keys())
-    WVPASSEQ(same, set(['u1', 'u2']))
-    WVPASSEQ(added, set(['u3']))
-    WVPASSEQ(deleted, set([]))
-
-    a2 = entry.merge(a1, base, b2)
+    a2 = Entries(entry.simple_merge(a1, base, b2))
     WVPASSEQ(len(a2.entries), 3)
     a2s = list(sorted(a2.entries, key=lambda i: i.uuid))
     WVPASSEQ([e.uuid for e in a2s], ['u1', 'u2', 'u3'])

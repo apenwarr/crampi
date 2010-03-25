@@ -71,36 +71,30 @@ def load_tree(gdb, treeid):
     return Entries(_load_tree(gdb, treeid))
 
 
-def _compare(cur, a, b):
-    curkeys = set(cur)
-    akeys = set(a)
-    bkeys = set(b)
-
-    added = (bkeys - akeys) - curkeys
-    deleted = (akeys - bkeys) & curkeys
-    same = curkeys - added - deleted
-    return (same, added, deleted)
-
-
 def merge(cur, a, b):
     cur.reindex()
     a.reindex()
     b.reindex()
-    (same, added, deleted) = _compare(cur.uuids.keys(),
-                                      a.uuids.keys(),
-                                      b.uuids.keys())
-
-    r = Entries([])
+    added = set(b.uuids.keys()) - set(a.uuids.keys()) - set(cur.uuids.keys())
     for e in cur.entries:
-        if not e.uuid in deleted:
-            ae = a.uuids.get(e.uuid)
-            be = a.uuids.get(e.uuid)
-            if be and (not ae or ae.d != be.d):
-                d = b.uuids[e.uuid].d  # FIXME merge individual elements?
-            else:
-                d = e.d
-            r.entries.append(Entry(e.lid, e.uuid, d))
+        ae = a.uuids.get(e.uuid)
+        be = b.uuids.get(e.uuid)
+        yield (e.lid, e.uuid, 
+               e.d,
+               ae and ae.d or None,
+               be and be.d or None)
     for uuid in added:
-        be = b.uuids[uuid]
-        r.entries.append(Entry(None, uuid, be.d))
-    return r
+        be = b.uuids.get(uuid)
+        yield (None, uuid,
+               None, None, be.d)
+
+
+def simple_merge(cur, a, b):
+    for lid,uuid,ed,aed,bed in merge(cur, a, b):
+        if aed and not bed:
+            # deleted
+            pass
+        elif bed and (not aed or aed != bed):
+            yield Entry(lid, uuid, bed)
+        else:
+            yield Entry(lid, uuid, ed)
