@@ -4,11 +4,17 @@ class Entry:
     def __init__(self, lid, uuid, d):
         self.lid = lid
         self.uuid = uuid
-        self.d = copy.deepcopy(d)
+        self.d = copy.copy(d)
 
-    def __str__(self):
+    def __unicode__(self):
         return '%s: %s %s' % (self.uuid, self.d.get('firstname', 'Mr.'),
                               self.d.get('lastname', 'Noname'))
+
+    def __str__(self):
+        try:
+            return str(self.__unicode__())
+        except UnicodeEncodeError:
+            return repr(self.__unicode__())
 
     def to_yaml(self):
         return yaml.safe_dump(self.d, default_flow_style=False)
@@ -20,7 +26,7 @@ class Entries:
         self.lids = self.uuids = None  # no indexes by default
 
     def clone(self):
-        return Entries([Entry(e.lid,e.uuid,copy.deepcopy(e.d))
+        return Entries([Entry(e.lid,e.uuid,copy.copy(e.d))
                         for e in self.entries])
 
     def reindex(self):
@@ -74,6 +80,15 @@ def _load_tree(gdb, treeid):
 def load_tree(gdb, treeid):
     return Entries(_load_tree(gdb, treeid))
 
+
+def load_tree_from_commit(gdb, commitid):
+    rv = gdb.commit(commitid)
+    if rv:
+        (ref, treeid, localids, m) = gdb.commit(commitid)
+        return load_tree(gdb, treeid)
+    else:
+        return Entries([])
+    
 
 def merge(cur, a, b):
     cur.reindex()

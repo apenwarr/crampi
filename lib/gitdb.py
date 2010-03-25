@@ -6,11 +6,6 @@ from lib.helpers import *
 
 _bin = sqlite3.Binary
 
-def _selectone(db, st, args = []):
-    for row in db.execute(st, args):
-        return row[0]
-
-
 def _create_v1(db):
     db.execute('create table Schema (version)')
     db.execute('insert into Schema default values')
@@ -27,7 +22,7 @@ class GitDb:
         self.filename = filename
         self.db = sqlite3.connect(self.filename)
         try:
-            sv = _selectone(self.db, 'select version from Schema')
+            sv = selectone(self.db, 'select version from Schema')
         except sqlite3.OperationalError:
             sv = None
         for v,func in _schema:
@@ -43,7 +38,7 @@ class GitDb:
                     except:
                         pass
                     raise
-                assert(_selectone(self.db, 'select version from Schema') == v)
+                assert(selectone(self.db, 'select version from Schema') == v)
         self.flush()
 
     def flush(self):
@@ -62,7 +57,7 @@ class GitDb:
         return self._blob_set('blob', content)
 
     def blob(self, sha1):
-        v = _selectone(self.db, 'select blob from Blobs where blobid=?',
+        v = selectone(self.db, 'select blob from Blobs where blobid=?',
                        [sha1])
         if v:
             return str(v)
@@ -100,12 +95,12 @@ class GitDb:
                 [refname, treeid, lb, merged_commit]).lastrowid
 
     def commitid_latest(self, refname):
-        return _selectone(self.db,
+        return selectone(self.db,
                           'select max(commitid) from Commits ' +
                           '  where refname=?', [refname])
 
     def commitid_lastmerge(self, refname, merged_refname):
-        return _selectone(self.db,
+        return selectone(self.db,
                           'select p2.commitid ' +
                           '  from Commits p1, Commits p2 ' +
                           '  where p1.merged_commit = p2.commitid ' +

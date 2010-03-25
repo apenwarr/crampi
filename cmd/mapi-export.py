@@ -1,3 +1,4 @@
+import datetime
 from lib import options, cmapi, gitdb, entry
 from lib.cmapitags import *
 
@@ -14,6 +15,7 @@ _mapping = {
     PR_SURNAME_W: 'lastname',
     PR_TITLE_W: 'title',
     PR_DEPARTMENT_NAME_W: 'department',
+    PR_COMPANY_NAME_W: 'company',
     # 0x81ae Email1Address: 'email',
     # 0x81b3 Email2Address: 'email2',
     PR_BUSINESS_TELEPHONE_NUMBER_W: 'phone',
@@ -38,7 +40,11 @@ def entries(f):
         d = {}
         ad = {}
         for k,kk in _mapping.items():
-            d[kk] = m.get(k)
+            v = m.get(k)
+            if type(v).__name__ in ['PyTime', 'time']:
+                v = unicode(v)
+            #v = unicode(v) + '!!' + type(v).__name__
+            d[kk] = v
         for k,kk in _admapping.items():
             ad[kk] = m.get(kk)
         if filter(None, ad.values()):

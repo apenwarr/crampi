@@ -1,4 +1,6 @@
+import datetime
 from lib import entry
+from lib.helpers import *
 
 def entries(s):
     q = ('select id, first_name, last_name, title, department, ' +
@@ -39,3 +41,41 @@ def entries(s):
         yield entry.Entry(lid, None, d)
 
 
+def _dmap(d, *names):
+    return [(d.get(n) or '') for n in names]
+
+
+def add_contact(s, d):
+    userid = 1
+    now = datetime.datetime.now()
+    cname = d.get('company')
+    cid = selectone(s, 'select id from accounts where name=?', [cname])
+    if cname and not cid:
+        cid = s.execute('insert into accounts ' +
+                        '  (name, access, ' + 
+                        '   user_id, created_at, updated_at, deleted_at) ' +
+                        ' values ' +
+                        '  (?,"Public", ?,?,?,?)',
+                        [cname, userid, now, now, None]).lastrowid
+    id = s.execute('insert into contacts ' +
+                   '  (first_name, last_name, title, department, ' +
+                   '   email, alt_email, phone, mobile, fax, blog, ' +
+                   '   born_on, access, ' + 
+                   '   user_id, created_at, updated_at, deleted_at) ' +
+                   ' values ' +
+                   '  (?,?,?,?, ?,?,?,?,?,?, ?,"Public", ?,?,?,?) ',
+                   _dmap(d, 'firstname', 'lastname', 'title', 'department',
+                         'email', 'email2', 'phone', 'mobile', 'fax',
+                         'web', 'birthdate') + [userid,now,now,None]).lastrowid
+    old_cid = selectone(s, 'select account_id from account_contacts ' +
+                        '  where contact_id=? and deleted_at is null ',
+                        [id])
+    if old_cid != cid:
+        s.execute('update account_contacts set deleted_at=? ' +
+                  '  where account_id=? ', [now,id])
+        s.execute('insert into account_contacts ' +
+                  '  (account_id, contact_id, ' +
+                  '   created_at, updated_at, deleted_at) ' +
+                  ' values ' +
+                  '  (?,?, ?,?,?)', [cid, id, now, now, None])
+    return id

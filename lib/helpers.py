@@ -14,3 +14,7 @@ def log(s):
     sys.stderr.write(s)
     sys.stderr.flush()
 
+
+def selectone(db, st, args = []):
+    for row in db.execute(st, args):
+        return row[0]
