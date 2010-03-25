@@ -46,3 +46,29 @@ def test_save_load_entries():
     WVPASSEQ(e2.uuids[u1].d, e1.uuids[u1].d)
     WVPASSEQ(e2.uuids[u2].d, e1.uuids[u2].d)
 
+
+@wvtest
+def test_merge_entries():
+    gdb = gitdb.GitDb('test.db.tmp')
+    a1 = Entries([
+        Entry('a1', 'u1', dict(a=1, b=2, c=3, d=[dict(x=7, y=9)])),
+        Entry('a2', 'u2', dict(a=11, b=22, c=33, d=[dict(x=77, y=99)])),
+    ])
+    b1 = Entries([
+        Entry('b1', 'u3', dict(a=111, b=222, c=333, d=[dict(x=777, y=999)])),
+    ])
+    b2 = entry.merge(b1, a1)
+    WVPASSEQ(len(b2.entries), 3)
+    WVPASSEQ([e.uuid for e in b2.entries], ['u3', 'u1', 'u2'])
+    WVPASSEQ([e.lid for e in b2.entries], ['b1', None, None])
+    WVPASSNE(b2.entries[0], b1.entries[0]) # not literally the same object
+    WVPASSEQ(b2.entries[0].d, b1.entries[0].d)  # but the same content
+    b2.entries[0].d['a'] = 1.5
+    WVPASSNE(b2.entries[0].d, b1.entries[0].d)
+
+    a2 = entry.merge(a1, b2)
+    WVPASSEQ(len(a2.entries), 3)
+    WVPASSEQ([e.uuid for e in a2.entries], ['u1', 'u2', 'u3'])
+    WVPASSEQ([e.lid for e in a2.entries], ['a1', 'a2', None])
+    a2.reindex()
+    WVPASSEQ(a2.uuids['u3'].d['a'], 1.5)
