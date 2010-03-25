@@ -6,6 +6,10 @@ class Entry:
         self.uuid = uuid
         self.d = copy.deepcopy(d)
 
+    def __str__(self):
+        return '%s: %s %s' % (self.uuid, self.d.get('firstname', 'Mr.'),
+                              self.d.get('lastname', 'Noname'))
+
     def to_yaml(self):
         return yaml.safe_dump(self.d, default_flow_style=False)
 

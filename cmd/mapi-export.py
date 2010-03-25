@@ -6,6 +6,7 @@ crampi mapi-export <folder name>
 --
 d,gitdb=   name of gitdb sqlite3 database file
 b,branch=  name of git branch to use for these files
+v,verbose  print names as they are exported
 """
 
 _mapping = {
@@ -63,9 +64,11 @@ def main(argv):
     sess = cmapi.Session()
     f = sess.recursive_find(fname)
     el = entry.Entries(entries(f))
-    
     el.uuids_from_commit(g, opt.branch)
     el.assign_missing_uuids(g)
+    if opt.verbose:
+        for e in sorted(el.entries, key = lambda x: x.uuid):
+            print e
     print el.save_commit(g, opt.branch)
     g.flush()
     

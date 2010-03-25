@@ -12,9 +12,9 @@ CRMPATH="apenwarr@crm:src/fat_free_crm/db/$CRMDB"
 # this seems to force Windows' disk caching to refresh, even over samba
 sha1sum crampi.py cmd/*.py lib/*.py >/dev/null
 
-$PY crampi.py mapi-export --branch mapi '*Avery*/Contacts/Zippy'
+$PY crampi.py mapi-export --branch mapi '*Avery*/Contacts/Zippy' -v
 rsync -a "$CRMPATH" "$CRMDB"
-$PY crampi.py crm-export --branch crm "$CRMDB"
+$PY crampi.py crm-export --branch crm "$CRMDB" -v
 rsync -a "$CRMDB" "$CRMPATH"
 
 set +v
