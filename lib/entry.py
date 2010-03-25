@@ -4,7 +4,7 @@ class Entry:
     def __init__(self, lid, uuid, d):
         self.lid = lid
         self.uuid = uuid
-        self.d = d
+        self.d = copy.deepcopy(d)
 
     def to_yaml(self):
         return yaml.safe_dump(self.d, default_flow_style=False)
@@ -14,6 +14,10 @@ class Entries:
     def __init__(self, entries):
         self.entries = list(entries)
         self.lids = self.uuids = None  # no indexes by default
+
+    def clone(self):
+        return Entries([Entry(e.lid,e.uuid,copy.deepcopy(e.d))
+                        for e in self.entries])
 
     def reindex(self):
         self.lids = {}
@@ -67,16 +71,36 @@ def load_tree(gdb, treeid):
     return Entries(_load_tree(gdb, treeid))
 
 
-def merge(main, merged):
+def _compare(cur, a, b):
+    curkeys = set(cur)
+    akeys = set(a)
+    bkeys = set(b)
+
+    added = (bkeys - akeys) - curkeys
+    deleted = (akeys - bkeys) & curkeys
+    same = curkeys - added - deleted
+    return (same, added, deleted)
+
+
+def merge(cur, a, b):
+    cur.reindex()
+    a.reindex()
+    b.reindex()
+    (same, added, deleted) = _compare(cur.uuids.keys(),
+                                      a.uuids.keys(),
+                                      b.uuids.keys())
+
     r = Entries([])
-    seen = {}
-    for e in main.entries:
-        ne = Entry(e.lid, e.uuid, copy.deepcopy(e.d))
-        r.entries.append(ne)
-        seen[e.uuid] = ne
-    for e in merged.entries:
-        if e.uuid in seen:
-            seen[e.uuid].d = copy.deepcopy(e.d)
-        else:
-            r.entries.append(Entry(None, e.uuid, copy.deepcopy(e.d)))
+    for e in cur.entries:
+        if not e.uuid in deleted:
+            ae = a.uuids.get(e.uuid)
+            be = a.uuids.get(e.uuid)
+            if be and (not ae or ae.d != be.d):
+                d = b.uuids[e.uuid].d  # FIXME merge individual elements?
+            else:
+                d = e.d
+            r.entries.append(Entry(e.lid, e.uuid, d))
+    for uuid in added:
+        be = b.uuids[uuid]
+        r.entries.append(Entry(None, uuid, be.d))
     return r

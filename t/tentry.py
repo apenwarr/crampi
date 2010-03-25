@@ -48,8 +48,20 @@ def test_save_load_entries():
 
 
 @wvtest
+def test_list_compare():
+    cur = [1,2,3,4,5]
+    a = [3,4,5,6,7]
+    b = [2,3,4,8]
+    (same, added, deleted) = entry._compare(cur,a,b)
+    WVPASSEQ(same, set([1,2,3,4]))
+    WVPASSEQ(added, set([8]))
+    WVPASSEQ(deleted, set([5]))
+
+
+@wvtest
 def test_merge_entries():
     gdb = gitdb.GitDb('test.db.tmp')
+    base = Entries([])
     a1 = Entries([
         Entry('a1', 'u1', dict(a=1, b=2, c=3, d=[dict(x=7, y=9)])),
         Entry('a2', 'u2', dict(a=11, b=22, c=33, d=[dict(x=77, y=99)])),
@@ -57,18 +69,37 @@ def test_merge_entries():
     b1 = Entries([
         Entry('b1', 'u3', dict(a=111, b=222, c=333, d=[dict(x=777, y=999)])),
     ])
-    b2 = entry.merge(b1, a1)
+    base.reindex()
+    a1.reindex()
+    b1.reindex()
+    (same, added, deleted) = entry._compare(b1.uuids.keys(),
+                                            base.uuids.keys(),
+                                            a1.uuids.keys())
+    WVPASSEQ(same, set(['u3']))
+    WVPASSEQ(added, set(['u1', 'u2']))
+    WVPASSEQ(deleted, set([]))
+    b2 = entry.merge(b1, base, a1)
     WVPASSEQ(len(b2.entries), 3)
-    WVPASSEQ([e.uuid for e in b2.entries], ['u3', 'u1', 'u2'])
-    WVPASSEQ([e.lid for e in b2.entries], ['b1', None, None])
-    WVPASSNE(b2.entries[0], b1.entries[0]) # not literally the same object
-    WVPASSEQ(b2.entries[0].d, b1.entries[0].d)  # but the same content
+    b2s = list(sorted(b2.entries, key=lambda i: i.uuid))
+    WVPASSEQ([e.uuid for e in b2s], ['u1', 'u2', 'u3'])
+    WVPASSEQ([e.lid for e in b2s], [None, None, 'b1'])
+    WVPASSNE(b2s[2], b1.entries[0]) # not literally the same object
+    WVPASSEQ(b2s[2].d, b1.entries[0].d)  # but the same content
     b2.entries[0].d['a'] = 1.5
     WVPASSNE(b2.entries[0].d, b1.entries[0].d)
 
-    a2 = entry.merge(a1, b2)
+    b2.reindex()
+    (same, added, deleted) = entry._compare(a1.uuids.keys(),
+                                            base.uuids.keys(),
+                                            b2.uuids.keys())
+    WVPASSEQ(same, set(['u1', 'u2']))
+    WVPASSEQ(added, set(['u3']))
+    WVPASSEQ(deleted, set([]))
+
+    a2 = entry.merge(a1, base, b2)
     WVPASSEQ(len(a2.entries), 3)
-    WVPASSEQ([e.uuid for e in a2.entries], ['u1', 'u2', 'u3'])
-    WVPASSEQ([e.lid for e in a2.entries], ['a1', 'a2', None])
+    a2s = list(sorted(a2.entries, key=lambda i: i.uuid))
+    WVPASSEQ([e.uuid for e in a2s], ['u1', 'u2', 'u3'])
+    WVPASSEQ([e.lid for e in a2s], ['a1', 'a2', None])
     a2.reindex()
     WVPASSEQ(a2.uuids['u3'].d['a'], 1.5)
