@@ -43,6 +43,19 @@ def test_gitdb():
         print repr(r)
     WVPASSEQ(g.commitid_latest('one'), c1b)
     WVPASSEQ(g.commitid_latest('two'), c2)
+
+    m1 = g.commit_set('two', t1, l2, c1b)
+    m2 = g.commit_set('two', t1, l2, c1)
+    m3 = g.commit_set('two', t1, l2, c2)
+    m4 = g.commit_set('one', t1, l2, c2)
+    m5 = g.commit_set('one', t1, l2, c1)
+
+    WVPASSEQ(g.commitid_lastmerge('two', 'one'), c1)
+    WVPASSEQ(g.commitid_lastmerge('two', 'two'), c2)
+    WVPASSEQ(g.commitid_lastmerge('one', 'one'), c1)
+    WVPASSEQ(g.commitid_lastmerge('big', 'one'), None)
+    WVPASSEQ(g.commitid_lastmerge('one', 'stupid'), None)
+    WVPASSEQ(g.commitid_lastmerge('bill', 'fred'), None)
     
     g.flush()
     

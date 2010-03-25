@@ -104,6 +104,17 @@ class GitDb:
                           'select max(commitid) from Commits ' +
                           '  where refname=?', [refname])
 
+    def commitid_lastmerge(self, refname, merged_refname):
+        return _selectone(self.db,
+                          'select p2.commitid ' +
+                          '  from Commits p1, Commits p2 ' +
+                          '  where p1.merged_commit = p2.commitid ' +
+                          '  and p1.refname=? and ' +
+                          '      p2.refname=? ' +
+                          '  order by p1.commitid desc ' +
+                          '  limit 1',
+                          [refname, merged_refname])
+        
     def commit(self, commitid):
         for r,t,lb,m in self.db.execute('select refname, tree_blobid, ' +
                                    '  localids_blobid, merged_commit ' +
@@ -112,3 +123,5 @@ class GitDb:
             lids = self.blob(lb)
             localids = yaml.safe_load(StringIO.StringIO(lids))
             return r,str(t),localids,m
+
+        
