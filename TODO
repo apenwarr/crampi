@@ -1,6 +1,7 @@
 
 import/export
-	rename *-export to *
+.	rename *-export to *
+.	import base contacts into CRM
 	import addresses into crm
 	import modifications into crm
 	dump a branch to stdout

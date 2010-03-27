@@ -26,8 +26,8 @@ sha1sum crampi.py cmd/*.py lib/*.py >/dev/null
 #crampi crm-export -b crm -m mapi2 "$CRMDB"
 #rsync -a "$CRMDB" "$CRMPATH"
 
-crampi crm-export -b c1 -m c2 ../fat_free_crm/db/development.sqlite3
-crampi crm-export -b c2 -m c1 ../fat_free_crm2/db/development.sqlite3
+crampi ffcrm -b c1 -m c2 ../fat_free_crm/db/development.sqlite3
+crampi ffcrm -b c2 -m c1 ../fat_free_crm2/db/development.sqlite3
 
 set +v
 echo
