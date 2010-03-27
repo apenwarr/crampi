@@ -5,20 +5,29 @@
 #
 set -e
 set -v
-PY=/c/Python26/python
+#PY=/c/Python26/python
+PY=python
 CRMDB="development.sqlite3"
 CRMPATH="apenwarr@crm:src/fat_free_crm/db/$CRMDB"
+
+crampi()
+{
+	$PY crampi.py "$@"
+}
 
 # this seems to force Windows' disk caching to refresh, even over samba
 sha1sum crampi.py cmd/*.py lib/*.py >/dev/null
 
-$PY crampi.py mapi-export --branch mapi '*Avery*/Contacts/Zippy'
-#$PY crampi.py mapi-export --branch mapi2 'Public Folders/All*/Global Contacts' -v
-rsync -a "$CRMPATH" "$CRMDB"
-$PY crampi.py crm-export --branch crm "$CRMDB"
-$PY crampi.py crm-export --branch crm --merge mapi "$CRMDB"
-#$PY crampi.py crm-export --branch crm --merge mapi2 "$CRMDB"
-rsync -a "$CRMDB" "$CRMPATH"
+#crampi mapi-export -b mapi '*Avery*/Contacts/Zippy'
+#crampi mapi-export -b mapi2 'Public Folders/All*/Global Contacts'
+#rsync -a "$CRMPATH" "$CRMDB"
+#crampi crm-export -b crm "$CRMDB"
+#crampi crm-export -b crm --merge mapi "$CRMDB"
+#crampi crm-export -b crm -m mapi2 "$CRMDB"
+#rsync -a "$CRMDB" "$CRMPATH"
+
+crampi crm-export -b c1 -m c2 ../fat_free_crm/db/development.sqlite3
+crampi crm-export -b c2 -m c1 ../fat_free_crm2/db/development.sqlite3
 
 set +v
 echo
