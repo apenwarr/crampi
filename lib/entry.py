@@ -19,6 +19,16 @@ class Entry:
     def to_yaml(self):
         return yaml.safe_dump(self.d, default_flow_style=False)
 
+    def patch(self, ad, bd):
+        if not ad:
+            ad = {}
+        for k in set(ad.keys()) | set(bd.keys()):
+            av = ad.get(k)
+            bv = bd.get(k)
+            if av != bv:
+                print 'updating %r from %r to %r' % (k, self.d.get(k), bv)
+                self.d[k] = bv
+
 
 class Entries:
     def __init__(self, entries):

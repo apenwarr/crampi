@@ -2,6 +2,7 @@ import datetime
 from lib import entry
 from lib.helpers import *
 
+
 def entries(s):
     q = ('select id, first_name, last_name, title, department, ' +
          '    email, alt_email, phone, mobile, fax, blog, born_on, ' +
@@ -45,10 +46,7 @@ def _dmap(d, *names):
     return [(d.get(n) or '') for n in names]
 
 
-def add_contact(s, d):
-    userid = 1
-    now = datetime.datetime.now()
-    cname = d.get('company')
+def get_or_add_company(s, cname):
     cid = selectone(s, 'select id from accounts where name=?', [cname])
     if cname and not cid:
         cid = s.execute('insert into accounts ' +
@@ -57,6 +55,30 @@ def add_contact(s, d):
                         ' values ' +
                         '  (?,"Public", ?,?,?,?)',
                         [cname, userid, now, now, None]).lastrowid
+    return cid
+
+
+def update_contact_company(s, id, cname):
+    userid = 1
+    now = datetime.datetime.now()
+    cid = get_or_add_company(s, cname)
+    old_cid = selectone(s, 'select account_id from account_contacts ' +
+                        '  where contact_id=? and deleted_at is null ' +
+                        '  order by id desc',
+                        [id])
+    if old_cid != cid:
+        s.execute('delete from account_contacts where contact_id=?', [id])
+        if cid:
+            s.execute('insert into account_contacts ' +
+                      '  (account_id, contact_id, ' +
+                      '   created_at, updated_at, deleted_at) ' +
+                      ' values ' +
+                      '  (?,?, ?,?,?)', [cid, id, now, now, None])
+
+
+def add_contact(s, d):
+    userid = 1
+    now = datetime.datetime.now()
     id = s.execute('insert into contacts ' +
                    '  (first_name, last_name, title, department, ' +
                    '   email, alt_email, phone, mobile, fax, blog, ' +
@@ -67,15 +89,32 @@ def add_contact(s, d):
                    _dmap(d, 'firstname', 'lastname', 'title', 'department',
                          'email', 'email2', 'phone', 'mobile', 'fax',
                          'web', 'birthdate') + [userid,now,now,None]).lastrowid
-    old_cid = selectone(s, 'select account_id from account_contacts ' +
-                        '  where contact_id=? and deleted_at is null ',
-                        [id])
-    if old_cid != cid:
-        s.execute('update account_contacts set deleted_at=? ' +
-                  '  where account_id=? ', [now,id])
-        s.execute('insert into account_contacts ' +
-                  '  (account_id, contact_id, ' +
-                  '   created_at, updated_at, deleted_at) ' +
-                  ' values ' +
-                  '  (?,?, ?,?,?)', [cid, id, now, now, None])
+    update_contact_company(s, id, d.get('company'))
     return id
+
+
+def update_contact(s, lid, d):
+    assert(lid)
+    now = datetime.datetime.now()
+    kv = {
+        'firstname': 'first_name',
+        'lastname': 'last_name',
+        'title': 'title',
+        'department': 'department',
+        'email': 'email',
+        'email2': 'alt_email',
+        'phone': 'phone',
+        'mobile': 'mobile',
+        'fax': 'fax',
+        'web': 'blog',
+        'birthdate': 'born_on',
+    }
+    setk = ['updated_at']
+    setv = [now]
+    for (dk,sk) in kv.items():
+        setk.append(sk)
+        setv.append(d.get(dk))
+    q = 'update contacts set %s where id=?' % (', '.join('%s=?' % k
+                                                         for k in setk))
+    s.execute(q, setv + [lid])
+    update_contact_company(s, lid, d.get('company'))

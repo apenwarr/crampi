@@ -54,6 +54,8 @@ def main(argv):
             elif ad != bd: # modify
                 mode = 'M'
                 e = el.uuids[uuid]
+                e.patch(ad, bd)
+                ffcrm.update_contact(s, lid, e.d)
             else:
                 mode = ''
                 e = el.uuids[uuid]
