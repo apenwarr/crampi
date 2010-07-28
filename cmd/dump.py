@@ -7,7 +7,7 @@ d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
 """
 
 def main(argv):
-    o = options.Options('crampi log', optspec)
+    o = options.Options('crampi dump', optspec)
     (opt, flags, extra) = o.parse(argv[1:])
 
     if len(extra) != 1:
