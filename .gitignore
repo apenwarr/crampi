@@ -3,3 +3,5 @@
 *.tmp
 *.sqlite3
 crampi
+*.db
+/bak
