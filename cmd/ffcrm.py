@@ -2,7 +2,7 @@ import sqlite3, yaml
 from lib import options, gitdb, entry, ffcrm
 
 optspec = """
-crampi crm-export [options] crmdb.sqlite3
+crampi ffcrm [options] crmdb.sqlite3
 --
 d,gitdb=   name of gitdb sqlite3 database file
 b,branch=  name of git branch to use for CRM data
@@ -11,7 +11,7 @@ v,verbose  print names as they are exported
 """
 
 def main(argv):
-    o = options.Options('crampi crm-export', optspec)
+    o = options.Options('crampi ffcrm', optspec)
     (opt, flags, extra) = o.parse(argv[1:])
 
     if len(extra) != 1:
@@ -21,7 +21,7 @@ def main(argv):
     if not opt.gitdb:
         opt.gitdb = 'gitdb.sqlite3'
     if not opt.branch:
-        opt.branch = 'crm-default'
+        o.fatal('you must specify the -b option')
 
     g = gitdb.GitDb(opt.gitdb)
     s = sqlite3.connect(opt.crmdb)

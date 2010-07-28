@@ -3,7 +3,7 @@ from lib import options, cmapi, gitdb, entry
 from lib.cmapitags import *
 
 optspec = """
-crampi mapi-export <folder name>
+crampi mapi <folder name>
 --
 d,gitdb=   name of gitdb sqlite3 database file
 b,branch=  name of git branch to use for these files
@@ -54,7 +54,7 @@ def entries(f):
 
 
 def main(argv):
-    o = options.Options('crampi mapi-export', optspec)
+    o = options.Options('crampi mapi', optspec)
     (opt, flags, extra) = o.parse(argv[1:])
 
     if len(extra) != 1:
@@ -64,7 +64,7 @@ def main(argv):
     if not opt.gitdb:
         opt.gitdb = 'gitdb.sqlite3'
     if not opt.branch:
-        opt.branch = 'mapi-default'
+        o.fatal('you must specify the -b option')
 
     g = gitdb.GitDb(opt.gitdb)
     sess = cmapi.Session()
