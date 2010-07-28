@@ -63,7 +63,7 @@ class GitDb:
     def blob(self, sha1):
         v = selectone(self.db, 'select blob from Blobs where blobid=?',
                        [sha1])
-        if v:
+        if v != None:
             return str(v)
 
     def uuid_new(self):
