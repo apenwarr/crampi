@@ -123,3 +123,14 @@ class GitDb:
             lids = self.blob(lb)
             localids = yaml.safe_load(StringIO.StringIO(lids))
             return r,str(t),localids,msg,m
+
+    def refs(self):
+        for (r,) in self.db.execute('select distinct refname from Commits'):
+            yield r
+
+    def commits_for_ref(self, refname):
+        for r,msg in self.db.execute('select commitid, msg ' +
+                                     '   from Commits ' +
+                                     '   where refname=? ' +
+                                     '   order by commitid desc', [refname]):
+            yield r,msg
