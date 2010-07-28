@@ -47,6 +47,8 @@ def _dmap(d, *names):
 
 
 def get_or_add_company(s, cname):
+    userid = 1
+    now = datetime.datetime.now()
     cid = selectone(s, 'select id from accounts where name=?', [cname])
     if cname and not cid:
         cid = s.execute('insert into accounts ' +
