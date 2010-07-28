@@ -1,8 +1,9 @@
 # a lame substitute for what git would do if we had it, but in sqlite form.
 # at least it's easier than rewriting git in python, or installing git on
 # Windows.
-import sqlite3, hashlib, yaml, StringIO, uuid
+import sqlite3, hashlib, StringIO, uuid
 from lib.helpers import *
+from lib import ycoder
 
 _bin = sqlite3.Binary
 
@@ -90,7 +91,7 @@ class GitDb:
 
     def commit_set(self, refname, treeid, localids, msg, merged_commit = None):
         # not at all the git format, unlike the trees and blobs
-        lids = yaml.safe_dump(dict(localids))
+        lids = ycoder.encode(dict(localids))
         lb = self.blob_set(lids)
         return self.db.execute(
                 'insert into Commits ' +
@@ -121,7 +122,7 @@ class GitDb:
                                    '  from Commits ' +
                                    '  where commitid=?', [commitid]):
             lids = self.blob(lb)
-            localids = yaml.safe_load(StringIO.StringIO(lids))
+            localids = ycoder.decode(StringIO.StringIO(lids))
             return r,str(t),localids,msg,m
 
     def refs(self):

@@ -1,4 +1,4 @@
-import sqlite3, yaml, time
+import sqlite3, time
 from lib import options, gitdb, entry, ffcrm
 
 optspec = """

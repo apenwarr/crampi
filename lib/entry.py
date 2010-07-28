@@ -1,4 +1,5 @@
-import yaml, copy
+import copy
+from lib import ycoder
 
 class Entry:
     def __init__(self, lid, uuid, d):
@@ -17,7 +18,7 @@ class Entry:
             return repr(self.__unicode__())
 
     def to_yaml(self):
-        return yaml.safe_dump(self.d, default_flow_style=False)
+        return ycoder.encode(self.d)
 
     def patch(self, ad, bd):
         if not ad:
@@ -83,7 +84,7 @@ class Entries:
 
 def _load_tree(gdb, treeid):
     for (uuid,blobid) in gdb.tree(treeid).iteritems():
-        d = yaml.safe_load(gdb.blob(blobid))
+        d = ycoder.decode(gdb.blob(blobid))
         yield Entry(None,uuid,d)
 
 
