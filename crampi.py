@@ -7,11 +7,11 @@ optspec = """
 crampi <command> [options...]
 """
 
-def usage():
+def usage(msg):
     log('usage: crampi <command> [options...]\n' +
         '\n' +
         'Available commands:\n')
-    for n in os.listdir('cmd'):
+    for n in sorted(os.listdir('cmd')):
         if n.endswith('.py') and not n[0] in ['_', '.']:
             log('  %s\n' % n[:-3])
     sys.exit(99)
@@ -24,5 +24,9 @@ o.usage = usage
 if not extra:
     o.fatal('you must provide a command name')
 
-m = __import__('cmd.%s' % extra[0], fromlist=['main'])
+cmd = extra[0]
+
+if not os.path.exists('cmd/%s.py' % cmd):
+    o.fatal('no subcommand named %r' % cmd)
+m = __import__('cmd.%s' % cmd, fromlist=['main'])
 m.main(argv = extra)
