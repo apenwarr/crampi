@@ -5,7 +5,7 @@ from lib.cmapitags import *
 optspec = """
 crampi mapi <folder name>
 --
-d,gitdb=   name of gitdb sqlite3 database file
+d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
 b,branch=  name of git branch to use for these files
 v,verbose  print names as they are exported
 """
@@ -61,8 +61,6 @@ def main(argv):
        o.fatal('you must provide exactly one folder name')
     fname = extra[0]
 
-    if not opt.gitdb:
-        opt.gitdb = 'gitdb.sqlite3'
     if not opt.branch:
         o.fatal('you must specify the -b option')
 

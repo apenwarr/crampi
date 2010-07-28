@@ -4,7 +4,7 @@ from lib import options, gitdb, entry, ffcrm
 optspec = """
 crampi ffcrm [options] crmdb.sqlite3
 --
-d,gitdb=   name of gitdb sqlite3 database file
+d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
 b,branch=  name of git branch to use for CRM data
 m,merge=   name of git branch to merge from
 v,verbose  print names as they are exported
@@ -18,8 +18,6 @@ def main(argv):
         o.fatal('exactly one argument expected')
     opt.crmdb = extra[0]
 
-    if not opt.gitdb:
-        opt.gitdb = 'gitdb.sqlite3'
     if not opt.branch:
         o.fatal('you must specify the -b option')
 
