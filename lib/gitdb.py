@@ -129,9 +129,12 @@ class GitDb:
         for (r,) in self.db.execute('select distinct refname from Commits'):
             yield r
 
-    def commits_for_ref(self, refname):
-        for r,msg in self.db.execute('select commitid, msg ' +
-                                     '   from Commits ' +
-                                     '   where refname=? ' +
-                                     '   order by commitid desc', [refname]):
-            yield r,msg
+    def commits(self, refname=None):
+        rns = refname and '   where refname=? ' or ''
+        rnl = refname and [refname] or []
+        for r,ref,msg in self.db.execute('select commitid, refname, msg ' +
+                                         '   from Commits ' +
+                                         rns +
+                                         '   order by commitid desc',
+                                         rnl):
+            yield r,ref,msg
