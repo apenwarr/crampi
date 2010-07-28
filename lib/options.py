@@ -6,7 +6,7 @@ class OptDict:
 
     def __setitem__(self, k, v):
         self._opts[k] = v
-        
+
     def __getitem__(self, k):
         return self._opts[k]
 
@@ -14,17 +14,34 @@ class OptDict:
         return self[k]
 
 
+def _default_onabort(msg):
+    sys.exit(97)
+
+
+def _intify(v):
+    try:
+        vv = int(v or '')
+        if str(vv) == v:
+            return vv
+    except ValueError:
+        pass
+    return v
+
+
 class Options:
-    def __init__(self, exe, optspec, optfunc=getopt.gnu_getopt):
+    def __init__(self, exe, optspec, optfunc=getopt.gnu_getopt,
+                 onabort=_default_onabort):
         self.exe = exe
         self.optspec = optspec
+        self._onabort = onabort
         self.optfunc = optfunc
         self._aliases = {}
         self._shortopts = 'h?'
         self._longopts = ['help']
         self._hasparms = {}
+        self._defaults = {}
         self._usagestr = self._gen_usage()
-        
+
     def _gen_usage(self):
         out = []
         lines = self.optspec.strip().split('\n')
@@ -48,17 +65,23 @@ class Options:
                     has_parm = 1
                 else:
                     has_parm = 0
+                g = re.search(r'\[([^\]]*)\]', extra)
+                if g:
+                    defval = g.group(1)
+                else:
+                    defval = None
                 flagl = flags.split(',')
                 flagl_nice = []
                 for f in flagl:
-                    f_nice = re.sub(r'\W', '_', f)
                     self._aliases[f] = flagl[0]
-                    self._aliases[f_nice] = flagl[0]
                     self._hasparms[f] = has_parm
+                    self._defaults[f] = _intify(defval)
                     if len(f) == 1:
                         self._shortopts += f + (has_parm and ':' or '')
                         flagl_nice.append('-' + f)
                     else:
+                        f_nice = re.sub(r'\W', '_', f)
+                        self._aliases[f_nice] = flagl[0]
                         assert(not f.startswith('no-')) # supported implicitly
                         self._longopts.append(f + (has_parm and '=' or ''))
                         self._longopts.append('no-' + f)
@@ -74,15 +97,18 @@ class Options:
             else:
                 out.append('\n')
         return ''.join(out).rstrip() + '\n'
-    
-    def usage(self):
+
+    def usage(self, msg=""):
         sys.stderr.write(self._usagestr)
-        sys.exit(97)
+        e = self._onabort and self._onabort(msg) or None
+        if e:
+            raise e
 
     def fatal(self, s):
-        sys.stderr.write('error: %s\n' % s)
-        return self.usage()
-        
+        msg = 'error: %s\n' % s
+        sys.stderr.write(msg)
+        return self.usage(msg)
+
     def parse(self, args):
         try:
             (flags,extra) = self.optfunc(args, self._shortopts, self._longopts)
@@ -90,29 +116,26 @@ class Options:
             self.fatal(e)
 
         opt = OptDict()
-        for f in self._aliases.values():
-            opt[f] = None
+
+        for k,v in self._defaults.iteritems():
+            k = self._aliases[k]
+            opt[k] = v
+        
         for (k,v) in flags:
-            while k.startswith('-'):
-                k = k[1:]
-            if k in ['h', '?', 'help']:
+            k = k.lstrip('-')
+            if k in ('h', '?', 'help'):
                 self.usage()
             if k.startswith('no-'):
                 k = self._aliases[k[3:]]
-                opt[k] = None
+                v = 0
             else:
                 k = self._aliases[k]
                 if not self._hasparms[k]:
                     assert(v == '')
-                    opt[k] = (opt._opts.get(k) or 0) + 1
+                    v = (opt._opts.get(k) or 0) + 1
                 else:
-                    try:
-                        vv = int(v)
-                        if str(vv) == v:
-                            v = vv
-                    except ValueError:
-                        pass
-                    opt[k] = v
-        for (f1,f2) in self._aliases.items():
-            opt[f1] = opt[f2]
+                    v = _intify(v)
+            opt[k] = v
+        for (f1,f2) in self._aliases.iteritems():
+            opt[f1] = opt._opts.get(f2)
         return (opt,flags,extra)
