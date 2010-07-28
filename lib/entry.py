@@ -53,7 +53,7 @@ class Entries:
     def uuids_from_commit(self, gdb, refname):
         commitid = gdb.commitid_latest(refname)
         if commitid:
-            (r, tree, localids, merged_commit) = gdb.commit(commitid)
+            (r, tree, localids, msg, merged_commit) = gdb.commit(commitid)
             for e in self.entries:
                 if not e.uuid:
                     e.uuid = localids.get(e.lid)
@@ -71,13 +71,13 @@ class Entries:
             blobs[e.uuid] = gdb.blob_set(e.to_yaml())
         return gdb.tree_set(blobs)
 
-    def save_commit(self, gdb, refname, merged_commit = None):
+    def save_commit(self, gdb, refname, msg, merged_commit = None):
         localids = []
         for e in self.entries:
             assert(e.lid)
             assert(e.uuid)
             localids.append((e.lid, e.uuid))
-        return gdb.commit_set(refname, self.save_tree(gdb), localids,
+        return gdb.commit_set(refname, self.save_tree(gdb), localids, msg,
                               merged_commit = merged_commit)
 
 
@@ -94,7 +94,7 @@ def load_tree(gdb, treeid):
 def load_tree_from_commit(gdb, commitid):
     rv = gdb.commit(commitid)
     if rv:
-        (ref, treeid, localids, m) = gdb.commit(commitid)
+        (ref, treeid, localids, msg, m) = gdb.commit(commitid)
         return load_tree(gdb, treeid)
     else:
         return Entries([])

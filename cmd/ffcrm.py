@@ -1,4 +1,4 @@
-import sqlite3, yaml
+import sqlite3, yaml, time
 from lib import options, gitdb, entry, ffcrm
 
 optspec = """
@@ -31,10 +31,11 @@ def main(argv):
     if opt.verbose:
         for e in sorted(el.entries, key = lambda x: x.uuid):
             print e
-    print el.save_commit(g, opt.branch)
+    print el.save_commit(g, opt.branch, 'exported from ffcrm %r' % opt.crmdb)
 
     if opt.merge:
-        a_id = g.commitid_lastmerge(opt.branch, opt.merge)
+        a_id = g.commitid_lastmerge(refname=opt.branch,
+                                    merged_refname=opt.merge)
         b_id = g.commitid_latest(opt.merge)
         print 'aid=%s bid=%s' % (a_id, b_id)
         a = entry.load_tree_from_commit(g, a_id)
@@ -62,7 +63,9 @@ def main(argv):
             if mode or opt.verbose:
                 print '%1s %s' % (mode, e)
         s.commit()
-        el.save_commit(g, opt.branch, b_id)
+        el.save_commit(g, opt.branch, merged_commit=b_id,
+                       msg='merged from %s:%s..%s at %s'
+                         % (opt.merge, a_id, b_id, time.asctime()))
     
     g.flush()
  

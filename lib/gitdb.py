@@ -14,7 +14,11 @@ def _create_v1(db):
                '  commitid integer primary key autoincrement, ' +
                '  refname, tree_blobid, localids_blobid, merged_commit)')
 
-_schema = [(1, _create_v1)]
+def _update_v2(db):
+    db.execute('alter table Commits add msg')
+
+_schema = [(1, _create_v1),
+           (2, _update_v2)]
 
 
 class GitDb:
@@ -84,15 +88,16 @@ class GitDb:
                 treedict[uuid] = blobid
         return treedict
 
-    def commit_set(self, refname, treeid, localids, merged_commit = None):
+    def commit_set(self, refname, treeid, localids, msg, merged_commit = None):
         # not at all the git format, unlike the trees and blobs
         lids = yaml.safe_dump(dict(localids))
         lb = self.blob_set(lids)
         return self.db.execute(
                 'insert into Commits ' +
-                '  (refname, tree_blobid, localids_blobid, merged_commit) ' +
-                '  values (?,?,?,?)',
-                [refname, treeid, lb, merged_commit]).lastrowid
+                '  (refname, tree_blobid, localids_blobid, ' + 
+                '   msg, merged_commit) ' +
+                '  values (?,?,?,?,?)',
+                [refname, treeid, lb, msg, merged_commit]).lastrowid
 
     def commitid_latest(self, refname):
         return selectone(self.db,
@@ -111,12 +116,10 @@ class GitDb:
                           [refname, merged_refname])
         
     def commit(self, commitid):
-        for r,t,lb,m in self.db.execute('select refname, tree_blobid, ' +
-                                   '  localids_blobid, merged_commit ' +
+        for r,t,lb,msg,m in self.db.execute('select refname, tree_blobid, ' +
+                                   '  localids_blobid, msg, merged_commit ' +
                                    '  from Commits ' +
                                    '  where commitid=?', [commitid]):
             lids = self.blob(lb)
             localids = yaml.safe_load(StringIO.StringIO(lids))
-            return r,str(t),localids,m
-
-        
+            return r,str(t),localids,msg,m
