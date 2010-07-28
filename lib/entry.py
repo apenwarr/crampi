@@ -101,6 +101,12 @@ def load_tree_from_commit(gdb, commitid):
         return Entries([])
     
 
+# do a three-way merge of Entries objects cur, a, and b.
+# The result corresponds to a 3-way diff that applies the changes from a->b
+# into cur. For each uuid that occurs in any of the three, yields
+# the lid, uuid, and three dictionaries needed to complete a column-by-column
+# merge if you want.  (If you just want to use last-writer-wins on the
+# entire record, use simple_merge().)
 def merge(cur, a, b):
     cur.reindex()
     a.reindex()
@@ -119,6 +125,16 @@ def merge(cur, a, b):
                None, None, be.d)
 
 
+# a "two-way diff" algorithm, which we implement as a special case of the
+# three-way diff.  Just return the uuid and dictionaries of each item that
+# occurs in either Entries object.
+def diff(a, b):
+    for lid,uuid,ed,ad,bd in merge(a, a, b):
+        yield uuid,ad,bd
+
+
+# take the results of merge() and don't try to update individual subkeys;
+# for each element, just use last-writer-wins across the entire object.
 def simple_merge(cur, a, b):
     for lid,uuid,ed,aed,bed in merge(cur, a, b):
         if aed and not bed:
