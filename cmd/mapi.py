@@ -74,7 +74,7 @@ def main(argv):
         for e in sorted(el.entries, key = lambda x: x.uuid):
             print e
     print el.save_commit(g, opt.branch,
-                         msg='exported from mapi %r at %s'
+                         msg='exported from mapi %r on %s'
                             % (fname, time.asctime()))
     g.flush()
     

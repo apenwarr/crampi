@@ -62,7 +62,7 @@ def main(argv):
                 print '%1s %s' % (mode, e)
         s.commit()
         el.save_commit(g, opt.branch, merged_commit=b_id,
-                       msg='merged from %s:%s..%s at %s'
+                       msg='merged from %s:%s..%s on %s'
                          % (opt.merge, a_id, b_id, time.asctime()))
     
     g.flush()
