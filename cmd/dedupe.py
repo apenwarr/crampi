@@ -32,9 +32,11 @@ def main(argv):
     edst = entry.load_tree_from_commit(g, dst)
 
     def _keygen(e):
-        #k = (e.d['lastname'], e.d['firstname'], e.d['company'])
-        k = (e.d['lastname'], e.d['firstname'])
+        k = ((e.d['lastname'] or '').strip().lower(),
+             (e.d['firstname'] or '').strip().lower())
         if not filter(None, k):  # all sub-elements are blank
+            k = ((e.d['company'] or '').strip(),)
+        if not filter(None, k):
             return None
         else:
             return k
