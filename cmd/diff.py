@@ -7,6 +7,9 @@ d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
 s,short    only show changed uuids, not changes to contents
 """
 
+def uprint(s):
+    print s.encode('utf-8')
+
 def main(argv):
     o = options.Options('crampi diff', optspec)
     (opt, flags, extra) = o.parse(argv[1:])
@@ -37,12 +40,12 @@ def main(argv):
         else:
             key = ''
         if old != None and old == new:
-            print ' %s%s' % (key, old)
+            uprint(' %s%s' % (key, old))
         else:
             if old != None:
-                print '-%s%s' % (key, old)
+                uprint('-%s%s' % (key, old))
             if new != None:
-                print '+%s%s' % (key, new)
+                uprint('+%s%s' % (key, new))
 
     for uuid,ad,bd in entry.diff(entries1, entries2):
         if not ad: ad = {}
