@@ -51,6 +51,9 @@ class Entries:
                 assert(not e.lid in self.lids)
                 self.lids[e.lid] = e
 
+    # match the lid for each entry with the lid from a previous commit, and
+    # copy the uuids from there.  That's how we make sure the uuids end up
+    # the same every time.
     def uuids_from_commit(self, gdb, refname):
         commitid = gdb.commitid_latest(refname)
         if commitid:
@@ -82,21 +85,24 @@ class Entries:
                               merged_commit = merged_commit)
 
 
-def _load_tree(gdb, treeid):
+def _load_tree(gdb, treeid, localids_rev):
     for (uuid,blobid) in gdb.tree(treeid).iteritems():
         d = ycoder.decode(gdb.blob(blobid))
-        yield Entry(None,uuid,d)
+        yield Entry(localids_rev[uuid],uuid,d)
 
 
-def load_tree(gdb, treeid):
-    return Entries(_load_tree(gdb, treeid))
+def load_tree(gdb, treeid, localids_rev):
+    return Entries(_load_tree(gdb, treeid, localids_rev))
 
 
 def load_tree_from_commit(gdb, commitid):
     rv = gdb.commit(commitid)
     if rv:
         (ref, treeid, localids, msg, m) = gdb.commit(commitid)
-        return load_tree(gdb, treeid)
+        localids_rev = {}
+        for lid,uuid in localids.items():
+            localids_rev[uuid] = lid
+        return load_tree(gdb, treeid, localids_rev)
     else:
         return Entries([])
     

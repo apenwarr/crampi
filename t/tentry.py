@@ -43,7 +43,10 @@ def test_save_load_entries():
     WVPASSEQ(e1.uuids['u1'], e1.entries[0])
 
     (u1, u2) = (e1.lids['l1'].uuid, e1.lids['l2'].uuid)
-    e2 = entry.load_tree(gdb, t1)
+    lids_rev = {}
+    for lid,e in e1.lids.items():
+        lids_rev[e.uuid] = lid
+    e2 = entry.load_tree(gdb, t1, lids_rev)
     e2.reindex()
     WVPASSEQ(e2.uuids[u1].d, e1.uuids[u1].d)
     WVPASSEQ(e2.uuids[u2].d, e1.uuids[u2].d)
