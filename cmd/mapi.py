@@ -1,4 +1,4 @@
-import datetime
+import datetime, time
 from lib import options, cmapi, gitdb, entry
 from lib.cmapitags import *
 
