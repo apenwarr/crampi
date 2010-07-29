@@ -17,6 +17,14 @@ def pr_to_name(num):
     return propnames.get(num, num)
 
 
+def _lookup_custom_props(handle, l):
+    for i in l:
+        if isinstance(i, int):
+            yield i
+        else:
+            yield i(handle)
+
+
 def binclean(s):
     if not isinstance(s, basestring):
         return s
@@ -143,15 +151,17 @@ class Message(Props):
 
 
 class Table(Mapi):
-    def __init__(self, pclass, handle):
+    def __init__(self, pclass, ohandle, handle):
         Mapi.__init__(self, handle)
+        self.ohandle = ohandle
         self.pclass = pclass
         
     def iter(self, *cols):
         self.h.SeekRow(mapi.BOOKMARK_BEGINNING, 0)
         if not cols:
             cols = self.h.QueryColumns(mapi.TBL_ALL_COLUMNS)
-        self.h.SetColumns(cols, 0)
+        xcols = list(_lookup_custom_props(self.ohandle, cols))
+        self.h.SetColumns(xcols, 0)
         while 1:
             rows = self.h.QueryRows(1024, 0)
             for row in rows:
@@ -165,7 +175,8 @@ class Table(Mapi):
 
 class Container(Props,FindableMixin):
     def children(self):
-        return Table(Container, self.h.GetHierarchyTable(mapi.MAPI_UNICODE))
+        return Table(Container, self.h,
+                     self.h.GetHierarchyTable(mapi.MAPI_UNICODE))
 
     def child(self, entryid, nicename):
         return Container(self._open(entryid, nicename))
@@ -177,7 +188,8 @@ class Container(Props,FindableMixin):
             yield eid,name,has_subfolders
 
     def messages(self):
-        return Table(Message, self.h.GetContentsTable(mapi.MAPI_UNICODE))
+        return Table(Message, self.h,
+                     self.h.GetContentsTable(mapi.MAPI_UNICODE))
 
     def message(self, entryid, nicename):
         return Message(self._open(entryid, nicename))
@@ -209,7 +221,8 @@ class Session(Mapi,FindableMixin):
                           for row in self.stores().iter(PR_ENTRYID)]
 
     def stores(self):
-        return Table(Store, self.h.GetMsgStoresTable(0))
+        return Table(Store, self.h,
+                     self.h.GetMsgStoresTable(0))
 
     def store(self, entryid):
         return Store(self.h.OpenMsgStore(0, entryid, None,

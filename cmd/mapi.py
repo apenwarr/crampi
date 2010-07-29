@@ -16,8 +16,8 @@ _mapping = {
     PR_TITLE_W: 'title',
     PR_DEPARTMENT_NAME_W: 'department',
     PR_COMPANY_NAME_W: 'company',
-    # 0x81ae Email1Address: 'email',
-    # 0x81b3 Email2Address: 'email2',
+    pr_custom(0x8083): 'email',  # Email1Address in OOM
+    pr_custom(0x8093): 'email2', # Email2Address in OOM
     PR_BUSINESS_TELEPHONE_NUMBER_W: 'phone',
     PR_MOBILE_TELEPHONE_NUMBER_W: 'mobile',
     PR_BUSINESS_FAX_NUMBER_W: 'fax',
