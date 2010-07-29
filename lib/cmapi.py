@@ -3,6 +3,10 @@ from win32com.mapi import mapi, mapitags
 from win32com.mapi.mapitags import *
 
 
+class OpenFailed(Exception):
+    pass
+
+
 propnames = {}
 for (_name,_num) in mapitags.__dict__.iteritems():
     if _name.startswith('PR_'):
@@ -25,8 +29,11 @@ class Mapi:
     def __init__(self, handle):
         self.h = handle
 
-    def _open(self, entryid):
-        return self.h.OpenEntry(entryid, None, mapi.MAPI_BEST_ACCESS)
+    def _open(self, entryid, nicename):
+        try:
+            return self.h.OpenEntry(entryid, None, mapi.MAPI_BEST_ACCESS)
+        except Exception, e:
+            raise OpenFailed("Can't open %s: %r" % (nicename, e))
 
     def _find(self, table, name):
         for (eid, ename) in table.iter(PR_ENTRYID, PR_DISPLAY_NAME_W):
@@ -44,7 +51,7 @@ class FindableMixin:
             except:
                 myname = '(top)'
             raise Exception('no %r in %r' % (name, myname))
-        return self.child(eid)
+        return self.child(eid, name)
 
     def recursive_find(self, name):
         names = name.split('/')
@@ -160,24 +167,33 @@ class Container(Props,FindableMixin):
     def children(self):
         return Table(Container, self.h.GetHierarchyTable(mapi.MAPI_UNICODE))
 
-    def child(self, entryid):
-        return Container(self._open(entryid))
+    def child(self, entryid, nicename):
+        return Container(self._open(entryid, nicename))
+
+    def subfolders(self):
+        it = self.children().iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
+                                  PR_SUBFOLDERS)
+        for eid,name,has_subfolders in it:
+            yield eid,name,has_subfolders
 
     def messages(self):
         return Table(Message, self.h.GetContentsTable(mapi.MAPI_UNICODE))
 
-    def message(self, entryid):
-        return Message(self._open(entryid))
+    def message(self, entryid, nicename):
+        return Message(self._open(entryid, nicename))
 
 
 class Store(Props):
-    def child(self, entryid):
-        return Container(self._open(entryid))
+    def child(self, entryid, nicename):
+        return Container(self._open(entryid, nicename))
 
     def root(self):
-        return self.child(self[PR_IPM_SUBTREE_ENTRYID])
+        return self.child(self[PR_IPM_SUBTREE_ENTRYID], 'root')
 
-
+# Session
+#    Stores
+#       Root Container
+#          Subfolder Containers
 class Session(Mapi,FindableMixin):
     def __init__(self, hwnd = 0, profile = None, password = None):
         mapi.MAPIInitialize((mapi.MAPI_INIT_VERSION,0))
@@ -202,7 +218,9 @@ class Session(Mapi,FindableMixin):
     def children(self):
         return self.stores()
 
-    def child(self, entryid):
+    def child(self, entryid, nicename):
         return self.store(entryid).root()
 
-
+    def subfolders(self):
+        for eid,name in self.stores().iter(PR_ENTRYID, PR_DISPLAY_NAME_W):
+            yield eid,name,True

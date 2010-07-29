@@ -1,16 +1,19 @@
 from lib import options, cmapi
 from lib.cmapitags import *
+from lib.helpers import *
 
 optspec = """
 crampi mapi-folders <folder names...>
 """
 
-def show_cont(indent, c):
-    for eid,name,subf in c.children().iter(PR_ENTRYID, PR_DISPLAY_NAME_W,
-                                           PR_SUBFOLDERS):
-        print '%s%s' % (indent, name)
-        if subf:
-            show_cont(indent+'    ', c.child(eid))
+def show_cont(prefix, c):
+    for eid,name,has_subfolders in c.subfolders():
+        print '%s%s' % (prefix, name)
+        if has_subfolders:
+            try:
+                show_cont(prefix+name+'/', c.child(eid,name))
+            except cmapi.OpenFailed, e:
+                log('error: %r\n' % e)
 
 
 def main(argv):
@@ -22,4 +25,4 @@ def main(argv):
         show_cont('', sess)
     else:
         for name in extra:
-            show_cont('', sess.recursive_find(name))
+            show_cont(name+'/', sess.recursive_find(name))
