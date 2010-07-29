@@ -26,8 +26,9 @@ class Entry:
         for k in set(ad.keys()) | set(bd.keys()):
             av = ad.get(k)
             bv = bd.get(k)
-            if av != bv:
-                print 'updating %r from %r to %r' % (k, self.d.get(k), bv)
+            ev = self.d.get(k)
+            if av != bv and ev != bv:
+                print 'updating %r from %r to %r' % (k, ev, bv)
                 self.d[k] = bv
 
 
