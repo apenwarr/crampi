@@ -21,7 +21,7 @@ _mapping = {
     PR_BUSINESS_TELEPHONE_NUMBER_W: 'phone',
     PR_MOBILE_TELEPHONE_NUMBER_W: 'mobile',
     PR_BUSINESS_FAX_NUMBER_W: 'fax',
-    PR_BUSINESS_HOME_PAGE_W: 'blog',
+    PR_BUSINESS_HOME_PAGE_W: 'web',
     PR_BIRTHDAY: 'birthdate',
 }
 _admapping = {
@@ -46,7 +46,7 @@ def entries(f):
             #v = unicode(v) + '!!' + type(v).__name__
             d[kk] = v
         for k,kk in _admapping.items():
-            ad[kk] = m.get(kk)
+            ad[kk] = m.get(k)
         if filter(None, ad.values()):
             ad['type'] = 'Business'
             d['addresses'] = [ad]
