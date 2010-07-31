@@ -53,6 +53,7 @@ def main(argv):
         se = srcdict.get(key)
         if key and se:
             print e.uuid, se.uuid
+            del srcdict[key]  # max one mapping each
             e.uuid = se.uuid
     edst.save_commit(g, dstbranch, 'deduplicated from %r@%r into %r@%r' 
                      % (opt.using, src, dstbranch, dst))
