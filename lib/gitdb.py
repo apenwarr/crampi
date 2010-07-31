@@ -122,7 +122,7 @@ class GitDb:
                                    '  from Commits ' +
                                    '  where commitid=?', [commitid]):
             lids = self.blob(lb)
-            localids = ycoder.decode(StringIO.StringIO(lids))
+            localids = ycoder.decode(lids)
             return r,str(t),localids,msg,m
 
     def refs(self):

@@ -24,4 +24,6 @@ def main(argv):
     entries = entry.load_tree_from_commit(g, commitid)
 
     for e in entries.entries:
-        print e.to_yaml()
+        for k,v in sorted(e.d.items()):
+            print '%s: %r' % (k,v)
+        print

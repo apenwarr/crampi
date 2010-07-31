@@ -17,7 +17,7 @@ class Entry:
         except UnicodeEncodeError:
             return repr(self.__unicode__())
 
-    def to_yaml(self):
+    def encode(self):
         return ycoder.encode(self.d)
 
     def patch(self, ad, bd):
@@ -73,7 +73,7 @@ class Entries:
         for e in self.entries:
             assert(e.uuid)
             assert(e.lid)
-            blobs[e.uuid] = gdb.blob_set(e.to_yaml())
+            blobs[e.uuid] = gdb.blob_set(e.encode())
         return gdb.tree_set(blobs)
 
     def save_commit(self, gdb, refname, msg, merged_commit = None):
