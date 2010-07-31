@@ -42,9 +42,9 @@ def main(argv):
         if old != None and old == new:
             uprint(' %s%s' % (key, old))
         else:
-            if old != None:
+            if old:
                 uprint('-%s%s' % (key, old))
-            if new != None:
+            if new:
                 uprint('+%s%s' % (key, new))
 
     for uuid,ad,bd in entry.diff(entries1, entries2):
