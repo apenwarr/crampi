@@ -1,5 +1,5 @@
 import os, sqlite3, time
-from lib import options, gitdb, entry, ffcrm
+from lib import options, gitdb, entry, ffcrm, merge
 
 optspec = """
 crampi ffcrm [options] crmdb.sqlite3
@@ -37,38 +37,10 @@ def main(argv):
     print el.save_commit(g, opt.branch, 'exported from ffcrm %r' % opt.crmdb)
 
     if opt.merge:
-        a_id = g.commitid_lastmerge(refname=opt.branch,
-                                    merged_refname=opt.merge)
-        b_id = g.commitid_latest(opt.merge)
-        print 'aid=%s bid=%s' % (a_id, b_id)
-        a = entry.load_tree_from_commit(g, a_id)
-        b = entry.load_tree_from_commit(g, b_id)
-        nel = el.clone()
-        for (lid,uuid,ed,ad,bd) in entry.merge(el, a, b):
-            d = None
-            if not ed: # add
-                mode = 'A'
-                assert(bd)
-                lid = ffcrm.add_contact(s, bd)
-                e = entry.Entry(lid, uuid, bd)
-                el.entries.append(e)
-            elif ad and not bd:  # del
-                mode = 'D'
-                e = el.uuids[uuid]
-            elif ad != bd: # modify
-                mode = 'M'
-                e = el.uuids[uuid]
-                e.patch(ad, bd)
-                ffcrm.update_contact(s, lid, e.d)
-            else:
-                mode = ''
-                e = el.uuids[uuid]
-            if mode or opt.verbose:
-                print '%1s %s' % (mode, e)
-        s.commit()
-        el.save_commit(g, opt.branch, merged_commit=b_id,
-                       msg='merged from %s:%s..%s on %s'
-                         % (opt.merge, a_id, b_id, time.asctime()))
+        merge.run(g, el, opt.branch, opt.merge, opt.verbose,
+                  add_contact = lambda d: ffcrm.add_contact(s, d),
+                  update_contact = lambda lid, d: 
+                        ffcrm.update_contact(s, lid, d),
+                  commit_contacts = lambda: s.commit())
     
     g.flush()
- 

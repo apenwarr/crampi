@@ -32,7 +32,7 @@ def main(argv):
     else:
         src = g.commitid_latest(opt.using)
         if not src:
-            o.fatal('invalid argument; specify a valid refname or commitid')
+            o.fatal('invalid --using; specify a valid refname or commitid')
 
     esrc = entry.load_tree_from_commit(g, src)
     edst = entry.load_tree_from_commit(g, dst)
