@@ -22,6 +22,7 @@ def run(g, el, branch, merged_refname, verbose,
         elif ad and not bd:  # del
             mode = 'D'
             e = el.uuids[uuid]
+            # do nothing: deletes are too dangerous to merge
         elif ad != bd: # modify
             mode = 'M'
             e = el.uuids[uuid]

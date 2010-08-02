@@ -74,3 +74,6 @@ WVPASS crampi dedupe c1check --using c1
 WVPASS crampi dedupe c2check --using c1
 WVPASSEQ "$(crampi diff c1 c1check)" ""
 WVPASSEQ "$(crampi diff c2 c2check)" ""
+
+WVSTART "validate"
+WVPASS crampi validate
