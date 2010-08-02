@@ -8,8 +8,13 @@ class Entry:
         self.d = copy.copy(d)
 
     def __unicode__(self):
-        return '%s: %s %s' % (self.uuid, self.d.get('firstname', 'Mr.'),
-                              self.d.get('lastname', 'Noname'))
+        fn = self.d.get('firstname')
+        ln = self.d.get('lastname')
+        cn = self.d.get('company')
+        if fn or ln:
+            return '%s: %s %s' % (self.uuid, fn, ln)
+        else:
+            return '%s: *%s' % (self.uuid, cn)
 
     def __str__(self):
         try:
