@@ -25,8 +25,10 @@ if not extra:
     o.fatal('you must provide a command name')
 
 cmd = extra[0]
+exedir = os.path.split(os.path.abspath(sys.argv[0]))[0]
+sys.path[:0] = [exedir]
 
-if not os.path.exists('cmd/%s.py' % cmd):
+if not os.path.exists('%s/cmd/%s.py' % (exedir, cmd)):
     o.fatal('no subcommand named %r' % cmd)
 m = __import__('cmd.%s' % cmd, fromlist=['main'])
 m.main(argv = extra)

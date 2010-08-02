@@ -1,4 +1,4 @@
-import sqlite3, time
+import os, sqlite3, time
 from lib import options, gitdb, entry, ffcrm
 
 optspec = """
@@ -20,6 +20,11 @@ def main(argv):
 
     if not opt.branch:
         o.fatal('you must specify the -b option')
+    if not os.path.exists(opt.crmdb):
+        o.fatal('crmdb %r does not exist' % opt.crmdb)
+    if opt.merge == opt.branch:
+        o.fatal('--merge parameter %r must differ from branch %r'
+                % (opt.merge, opt.branch))
 
     g = gitdb.GitDb(opt.gitdb)
     s = sqlite3.connect(opt.crmdb)

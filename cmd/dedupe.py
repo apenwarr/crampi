@@ -21,6 +21,12 @@ def main(argv):
     if not dst:
         o.fatal('invalid argument; specify a valid refname')
 
+    if not opt.using:
+        o.fatal('you must provide --using')
+    if opt.using == extra[0]:
+        o.fatal('--using option %r must differ from destination branch %r'
+                % (opt.using, extra[0]))
+
     if g.commit(opt.using):
         src = opt.using
     else:

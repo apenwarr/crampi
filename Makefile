@@ -1,22 +1,19 @@
 default: all
 
 all: crampi
-	@echo "Done."
-	@echo
-	@echo 'Now try: make test'
-	@echo '     or: make clean'
 	
 crampi: crampi.py
 	ln -sf crampi.py crampi
 	
-runtests:
+runtests: all
 	./wvtest.py t/tgitdb.py $(wildcard t/*.py)
+	t/test.sh
 	
-test:
+test: all
 	./wvtestrun $(MAKE) runtests
 
 clean:
-	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp crampi
+	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp */*.tmp crampi
 
 distclean: clean
 	rm -f *.sqlite3 *.db
