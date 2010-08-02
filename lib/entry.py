@@ -46,16 +46,23 @@ class Entries:
         return Entries([Entry(e.lid,e.uuid,copy.copy(e.d))
                         for e in self.entries])
 
+    def _do_index(self, e):
+        if e.uuid:
+            assert(not e.uuid in self.uuids)
+            self.uuids[e.uuid] = e
+        if e.lid:
+            assert(not e.lid in self.lids)
+            self.lids[e.lid] = e
+
     def reindex(self):
         self.lids = {}
         self.uuids = {}
         for e in self.entries:
-            if e.uuid:
-                assert(not e.uuid in self.uuids)
-                self.uuids[e.uuid] = e
-            if e.lid:
-                assert(not e.lid in self.lids)
-                self.lids[e.lid] = e
+            self._do_index(e)
+
+    def add(self, e):
+        self.entries.append(e)
+        self._do_index(e)
 
     # match the lid for each entry with the lid from a previous commit, and
     # copy the uuids from there.  That's how we make sure the uuids end up
@@ -78,11 +85,13 @@ class Entries:
         for e in self.entries:
             assert(e.uuid)
             assert(e.lid)
+            assert(not e.uuid in blobs)
             blobs[e.uuid] = gdb.blob_set(e.encode())
         return gdb.tree_set(blobs)
 
     def save_commit(self, gdb, refname, msg, merged_commit = None):
         localids = []
+        self.reindex()
         for e in self.entries:
             assert(e.lid)
             assert(e.uuid)
