@@ -26,6 +26,7 @@ class Entry:
         return ycoder.encode(self.d)
 
     def patch(self, ad, bd):
+        rd = {}
         if not ad:
             ad = {}
         for k in set(ad.keys()) | set(bd.keys()):
@@ -35,6 +36,8 @@ class Entry:
             if av != bv and ev != bv:
                 print 'updating %r from %r to %r' % (k, ev, bv)
                 self.d[k] = bv
+                rd[k] = bv
+        return rd
 
 
 class Entries:

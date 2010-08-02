@@ -13,6 +13,7 @@ def run(g, el, branch, merged_refname, verbose,
     nel = el.clone()
     for (lid,uuid,ed,ad,bd) in entry.merge(el, a, b):
         d = None
+        e = None
         if not ed: # add
             mode = 'A'
             assert(bd)
@@ -26,8 +27,9 @@ def run(g, el, branch, merged_refname, verbose,
         elif ad != bd: # modify
             mode = 'M'
             e = el.uuids[uuid]
-            e.patch(ad, bd)
-            update_contact(lid, e.d)
+            changes = e.patch(ad, bd)
+            if changes:
+                update_contact(lid, e.d, changes)
         else:
             mode = ''
             e = el.uuids[uuid]

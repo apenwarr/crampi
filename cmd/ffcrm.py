@@ -39,7 +39,7 @@ def main(argv):
     if opt.merge:
         merge.run(g, el, opt.branch, opt.merge, opt.verbose,
                   add_contact = lambda d: ffcrm.add_contact(s, d),
-                  update_contact = lambda lid, d: 
+                  update_contact = lambda lid, d, changes: 
                         ffcrm.update_contact(s, lid, d),
                   commit_contacts = lambda: s.commit())
     

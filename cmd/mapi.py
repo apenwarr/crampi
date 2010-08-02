@@ -1,5 +1,6 @@
 import datetime, time
-from lib import options, cmapi, gitdb, entry
+from lib import options, cmapi, gitdb, entry, merge
+from lib.helpers import *
 from lib.cmapitags import *
 
 optspec = """
@@ -7,6 +8,7 @@ crampi mapi <folder name>
 --
 d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
 b,branch=  name of git branch to use for these files
+m,merge=   name of git branch to merge from
 v,verbose  print names as they are exported
 """
 
@@ -16,7 +18,7 @@ _mapping = {
     PR_TITLE_W: 'title',
     PR_DEPARTMENT_NAME_W: 'department',
     PR_COMPANY_NAME_W: 'company',
-    pr_custom(0x8083): 'email',  # Email1Address in OOM
+    pr_custom(0x8083): 'email',  # Email1Address in OutlookObjectModel
     pr_custom(0x8093): 'email2', # Email2Address in OOM
     PR_BUSINESS_TELEPHONE_NUMBER_W: 'phone',
     PR_MOBILE_TELEPHONE_NUMBER_W: 'mobile',
@@ -33,6 +35,9 @@ _admapping = {
     PR_POSTAL_ADDRESS_W: 'fulladdress',
 }
 
+_mapping_r = dict((v,k) for k,v in _mapping.items())
+_admapping_r = dict((v,k) for k,v in _admapping.items())
+
 
 def entries(f):
     keys = [PR_ENTRYID] + _mapping.keys() + _admapping.keys()
@@ -43,7 +48,6 @@ def entries(f):
             v = m.get(k)
             if type(v).__name__ in ['PyTime', 'time']:
                 v = unicode(v)
-            #v = unicode(v) + '!!' + type(v).__name__
             d[kk] = v
         for k,kk in _admapping.items():
             ad[kk] = m.get(k)
@@ -51,6 +55,36 @@ def entries(f):
             ad['type'] = 'Business'
             d['addresses'] = [ad]
         yield entry.Entry(m.get(PR_ENTRYID), None, d)
+
+
+_v = 5
+def add_contact(f, d):
+    log('--\nadd_contact: %r\n' % d)
+    global _v
+    _v += 1
+    return _v
+
+
+def update_contact(f, lid, d, changes):
+    log('--\nupdate_contact %r: %r\n' % (lid, changes))
+    msg = f.message(lid, repr(lid))
+    # note: the above should always succeed, since merge.run() has already
+    # made sure of what's a delete vs. modify vs. add.
+    for k,v in changes.items():
+        if k == 'addresses':
+            continue
+        pr = _mapping_r.get(k)
+        print 'updating: %r' % ((pr,k,v),)
+        if pr:
+            msg.setprops((pr, v))
+    adlist = changes.get('addresses')
+    if adlist:
+        for k,v in adlist[0].items():
+            pr = _admapping_r.get(k)
+            print 'ad_updating: %r' % ((pr,k,v),)
+            if pr:
+                msg.setprops((pr, v))
+    msg.save()
 
 
 def main(argv):
@@ -76,5 +110,13 @@ def main(argv):
     print el.save_commit(g, opt.branch,
                          msg='exported from mapi %r on %s'
                             % (fname, time.asctime()))
+    
+    if opt.merge:
+        merge.run(g, el, opt.branch, opt.merge, opt.verbose,
+                  add_contact = lambda d: add_contact(f, d),
+                  update_contact = lambda lid, d, changes: 
+                      update_contact(f, lid, d, changes),
+                  commit_contacts = lambda: None)
+    
     g.flush()
     

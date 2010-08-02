@@ -145,6 +145,13 @@ class Props(Mapi,BaseProps):
         ret, props = self.h.GetProps(propids)
         self.importprops(propids, props)
 
+    def setprops(self, *props):
+        # each prop is (pr_name, value)
+        self.h.SetProps(props)
+
+    def save(self):
+        self.h.SaveChanges(0)
+
 
 class Message(Props):
     pass
