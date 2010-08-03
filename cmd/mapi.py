@@ -12,14 +12,21 @@ m,merge=   name of git branch to merge from
 v,verbose  print names as they are exported
 """
 
+_email_prop = pr_custom(0x8083)   # Email1Address in OutlookObjectModel
+_email2_prop = pr_custom(0x8093)  # Email2Address in OOM
+_email_disp_prop = pr_custom(0x8084)   # Email1DisplayName in OOM
+_email2_disp_prop = pr_custom(0x8094)  # Email2DisplayName in OOM
+_fileas_prop = pr_custom(0x8005)  # FileAs in OOM
+
 _mapping = {
     PR_GIVEN_NAME_W: 'firstname',
     PR_SURNAME_W: 'lastname',
     PR_TITLE_W: 'title',
     PR_DEPARTMENT_NAME_W: 'department',
     PR_COMPANY_NAME_W: 'company',
-    pr_custom(0x8083): 'email',  # Email1Address in OutlookObjectModel
-    pr_custom(0x8093): 'email2', # Email2Address in OOM
+    _email_prop: 'email',
+    _email2_prop: 'email2',
+    PR_HOME_TELEPHONE_NUMBER_W: 'homephone',
     PR_BUSINESS_TELEPHONE_NUMBER_W: 'phone',
     PR_MOBILE_TELEPHONE_NUMBER_W: 'mobile',
     PR_BUSINESS_FAX_NUMBER_W: 'fax',
@@ -57,12 +64,50 @@ def entries(f):
         yield entry.Entry(m.get(PR_ENTRYID), None, d)
 
 
-_v = 5
+def _displayname(last, first, company):
+    if last and first:
+        return '%s, %s' % (last, first)
+    elif last:
+        return last
+    elif first:
+        return first
+    else:
+        return company
+
+
+def _setprops(msg, d):
+    for k,v in d.items():
+        if k == 'addresses':
+            continue
+        pr = _mapping_r.get(k)
+        print 'updating: %r' % ((pr,k,v),)
+        if pr:
+            msg.setprops((pr, v))
+        if k == 'email':
+            msg.setprops((_email_disp_prop, v))
+        elif k == 'email2':
+            msg.setprops((_email2_disp_prop, v))
+    adlist = d.get('addresses')
+    if adlist:
+        for k,v in adlist[0].items():
+            pr = _admapping_r.get(k)
+            print 'ad_updating: %r' % ((pr,k,v),)
+            if pr:
+                msg.setprops((pr, v))
+
+
 def add_contact(f, d):
     log('--\nadd_contact: %r\n' % d)
-    global _v
-    _v += 1
-    return _v
+    msg = f.newmessage()
+    displayname = _displayname(d.get('lastname'), d.get('firstname'),
+                               d.get('company'))
+    msg.setprops((PR_MESSAGE_CLASS, 'IPM.Contact'))
+    msg.setprops((PR_DISPLAY_NAME_W, displayname),
+                 (_fileas_prop, displayname))
+    _setprops(msg, d)
+    lid = msg[PR_ENTRYID]
+    msg.save()
+    return lid
 
 
 def update_contact(f, lid, d, changes):
@@ -70,20 +115,11 @@ def update_contact(f, lid, d, changes):
     msg = f.message(lid, repr(lid))
     # note: the above should always succeed, since merge.run() has already
     # made sure of what's a delete vs. modify vs. add.
-    for k,v in changes.items():
-        if k == 'addresses':
-            continue
-        pr = _mapping_r.get(k)
-        print 'updating: %r' % ((pr,k,v),)
-        if pr:
-            msg.setprops((pr, v))
-    adlist = changes.get('addresses')
-    if adlist:
-        for k,v in adlist[0].items():
-            pr = _admapping_r.get(k)
-            print 'ad_updating: %r' % ((pr,k,v),)
-            if pr:
-                msg.setprops((pr, v))
+    displayname = _displayname(d.get('lastname'), d.get('firstname'),
+                               d.get('company'))
+    msg.setprops((PR_DISPLAY_NAME_W, displayname),
+                 (_fileas_prop, displayname))
+    _setprops(msg, changes)
     msg.save()
 
 

@@ -1,4 +1,4 @@
-import fnmatch
+import fnmatch, time
 from win32com.mapi import mapi, mapitags
 from win32com.mapi.mapitags import *
 
@@ -23,6 +23,15 @@ def _lookup_custom_props(handle, l):
             yield i
         else:
             yield i(handle)
+
+
+def _lookup_custom_props_tuple(handle, l):
+    l1 = [k for k,v in l]
+    l2 = [v for k,v in l]
+    for k,v in zip(_lookup_custom_props(handle, l1), l2):
+        if v and (PROP_TYPE(k) in (PT_APPTIME,PT_SYSTIME)):
+            v = time.strptime(v, '%m/%d/%y %H:%M:%S')
+        yield k,v
 
 
 def binclean(s):
@@ -147,7 +156,12 @@ class Props(Mapi,BaseProps):
 
     def setprops(self, *props):
         # each prop is (pr_name, value)
-        self.h.SetProps(props)
+        xprops = _lookup_custom_props_tuple(self.h, props)
+        xprops = [(k,v) for k,v in xprops if v]
+        for k,v in xprops:
+            print repr(((propnames.get(k), k), v))
+        if xprops:
+            self.h.SetProps(xprops)
 
     def save(self):
         self.h.SaveChanges(0)
@@ -200,6 +214,12 @@ class Container(Props,FindableMixin):
 
     def message(self, entryid, nicename):
         return Message(self._open(entryid, nicename))
+
+    def newmessage(self):
+        try:
+            return Message(self.h.CreateMessage(None, 0))
+        except Exception, e:
+            raise OpenFailed("Can't create new message: %r" % e)
 
 
 class Store(Props):
