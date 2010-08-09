@@ -4,7 +4,7 @@ from lib import options, gitdb, entry, ffcrm, merge
 optspec = """
 crampi ffcrm [options] crmdb.sqlite3
 --
-d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
+d,gitdb=   name of gitdb sqlite3 database file [crampi.sqlite3]
 b,branch=  name of git branch to use for CRM data
 m,merge=   name of git branch to merge from
 v,verbose  print names as they are exported

@@ -3,7 +3,7 @@ from lib import options, gitdb, entry
 optspec = """
 crampi dedupe <dest-refname> --using <refname|commitid>
 --
-d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
+d,gitdb=   name of gitdb sqlite3 database file [crampi.sqlite3]
 using=     refname or commitid to use as GUID source
 """
 

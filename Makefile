@@ -13,7 +13,7 @@ test: all
 	./wvtestrun $(MAKE) runtests
 
 clean:
-	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp */*.tmp crampi
+	rm -f *.pyc *~ .*~ */*.pyc */*~ *.tmp */*.tmp t/crampi.sqlite3 crampi
 
 distclean: clean
 	rm -f *.sqlite3 *.db

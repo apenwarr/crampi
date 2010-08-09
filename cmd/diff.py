@@ -3,7 +3,7 @@ from lib import options, gitdb, entry
 optspec = """
 crampi diff <commitid|refname> <commitid|refname>
 --
-d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
+d,gitdb=   name of gitdb sqlite3 database file [crampi.sqlite3]
 s,short    only show changed uuids, not changes to contents
 """
 

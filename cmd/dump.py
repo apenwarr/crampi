@@ -3,7 +3,7 @@ from lib import options, gitdb, entry
 optspec = """
 crampi dump <commitid|refname>
 --
-d,gitdb=   name of gitdb sqlite3 database file [gitdb.sqlite3]
+d,gitdb=   name of gitdb sqlite3 database file [crampi.sqlite3]
 """
 
 def main(argv):

@@ -11,7 +11,7 @@ crampi()
 }
 
 WVSTART "init"
-rm -f gitdb.sqlite3
+rm -f crampi.sqlite3
 cp sample/crm-demodata.db c1.tmp
 cp sample/crm-demodata2.db c2.tmp
 cp sample/crm-demodata3.db c3.tmp
