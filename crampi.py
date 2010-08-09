@@ -25,10 +25,18 @@ if not extra:
     o.fatal('you must provide a command name')
 
 cmd = extra[0]
-exedir = os.path.split(os.path.abspath(sys.argv[0]))[0]
-sys.path[:0] = [exedir]
+def parent_dir(fn):
+    return os.path.split(os.path.abspath(fn))[0]
+exedirs = [parent_dir(sys.argv[0]),
+           parent_dir(os.path.realpath(sys.argv[0]))]
+sys.path[:0] = exedirs
 
-if not os.path.exists('%s/cmd/%s.py' % (exedir, cmd)):
+def exedirs_contains(cmd):
+    for dir in exedirs:
+        if os.path.exists('%s/cmd/%s.py' % (dir, cmd)):
+            return dir
+
+if not exedirs_contains(cmd):
     o.fatal('no subcommand named %r' % cmd)
 m = __import__('cmd.%s' % cmd, fromlist=['main'])
 m.main(argv = extra)
