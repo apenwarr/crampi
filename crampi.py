@@ -7,7 +7,7 @@ optspec = """
 crampi <command> [options...]
 """
 
-def usage(msg):
+def usage(msg = ''):
     log('usage: crampi <command> [options...]\n' +
         '\n' +
         'Available commands:\n')
