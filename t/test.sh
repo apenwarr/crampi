@@ -16,13 +16,16 @@ cp sample/crm-demodata.db c1.tmp
 cp sample/crm-demodata2.db c2.tmp
 cp sample/crm-demodata3.db c3.tmp
 cp sample/crm-empty.db ce.tmp
+cp sample/crm-empty.db ce2.tmp
 
 WVSTART "import"
 WVPASS crampi ffcrm -b orig c1.tmp
 WVPASS crampi ffcrm -b c1 c1.tmp
 WVPASS crampi ffcrm -b c2 c1.tmp
 WVPASS crampi ffcrm -b ce ce.tmp
+WVPASS crampi ffcrm -b ce2 ce2.tmp
 WVPASSEQ "$(crampi dump ce)" ""
+WVPASSEQ "$(crampi dump ce2)" ""
 WVPASSNE "$(crampi dump c1)" ""
 WVPASSNE "$(crampi dump c2)" ""
 
@@ -39,13 +42,19 @@ WVPASS crampi dedupe c2 --using c1
 WVPASSEQ "$(crampi diff c1 c2)" ""
 
 WVSTART "log"
-WVPASSEQ "$(crampi refs | wc -l)" "4"
-WVPASSEQ "$(crampi log | wc -l)" "6"
+WVPASSEQ "$(crampi refs | wc -l)" "5"
+WVPASSEQ "$(crampi log | wc -l)" "7"
 WVPASSEQ "$(crampi log c2 | wc -l)" "2"
 
 WVSTART "trivial merge"
 WVPASS crampi ffcrm -b ce ce.tmp -m c1
 WVPASSEQ "$(crampi diff c1 ce)" ""
+
+WVSTART "fake merge"
+WVPASS crampi fake-merge -b ce2 -m c1
+WVPASSEQ "$(crampi dump ce2)" ""
+WVPASS crampi ffcrm -b ce2 ce2.tmp -m c1  # nothing changed since fake merge
+WVPASSEQ "$(crampi dump ce2)" ""
 
 WVSTART "harder merge"
 WVPASSEQ "$(crampi diff c1 c2)" ""

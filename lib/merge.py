@@ -18,8 +18,9 @@ def run(g, el, branch, merged_refname, verbose,
             mode = 'A'
             assert(bd)
             lid = add_contact(bd)
-            e = entry.Entry(lid, uuid, bd)
-            el.add(e)
+            if lid:
+                e = entry.Entry(lid, uuid, bd)
+                el.add(e)
         elif ad and not bd:  # del
             mode = 'D'
             e = el.uuids[uuid]
