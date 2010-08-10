@@ -105,8 +105,9 @@ def add_contact(f, d):
     msg.setprops((PR_DISPLAY_NAME_W, displayname),
                  (_fileas_prop, displayname))
     _setprops(msg, d)
-    lid = msg[PR_ENTRYID]
     msg.save()
+    lid = msg[PR_ENTRYID]
+    assert(lid)
     return lid
 
 

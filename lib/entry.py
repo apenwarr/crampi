@@ -73,6 +73,7 @@ class Entries:
             self._do_index(e)
 
     def add(self, e):
+        assert(e.lid)
         self.entries.append(e)
         self._do_index(e)
 
