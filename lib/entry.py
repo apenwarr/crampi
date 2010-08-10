@@ -1,5 +1,14 @@
 import copy
 from lib import ycoder
+from helpers import *
+
+
+def nullify(x):
+    if x == None or x == '' or x == []:
+        return None
+    else:
+        return x
+
 
 class Entry:
     def __init__(self, lid, uuid, d):
@@ -30,9 +39,9 @@ class Entry:
         if not ad:
             ad = {}
         for k in set(ad.keys()) | set(bd.keys()):
-            av = ad.get(k)
-            bv = bd.get(k)
-            ev = self.d.get(k)
+            av = nullify(ad.get(k))
+            bv = nullify(bd.get(k))
+            ev = nullify(self.d.get(k))
             if av != bv and ev != bv:
                 log('updating %r from %r to %r\n' % (k, ev, bv))
                 self.d[k] = bv
