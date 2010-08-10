@@ -80,7 +80,7 @@ def _setprops(msg, d):
         if k == 'addresses':
             continue
         pr = _mapping_r.get(k)
-        print 'updating: %r' % ((pr,k,v),)
+        #print 'updating: %r' % ((pr,k,v),)
         if pr:
             msg.setprops((pr, v))
         if k == 'email':
@@ -91,13 +91,13 @@ def _setprops(msg, d):
     if adlist:
         for k,v in adlist[0].items():
             pr = _admapping_r.get(k)
-            print 'ad_updating: %r' % ((pr,k,v),)
+            #print 'ad_updating: %r' % ((pr,k,v),)
             if pr:
                 msg.setprops((pr, v))
 
 
 def add_contact(f, d):
-    log('--\nadd_contact: %r\n' % d)
+    #log('--\nadd_contact: %r\n' % d)
     msg = f.newmessage()
     displayname = _displayname(d.get('lastname'), d.get('firstname'),
                                d.get('company'))
@@ -111,7 +111,7 @@ def add_contact(f, d):
 
 
 def update_contact(f, lid, d, changes):
-    log('--\nupdate_contact %r: %r\n' % (lid, changes))
+    #log('--\nupdate_contact %r: %r\n' % (lid, changes))
     msg = f.message(lid, repr(lid))
     # note: the above should always succeed, since merge.run() has already
     # made sure of what's a delete vs. modify vs. add.
@@ -142,7 +142,7 @@ def main(argv):
     el.assign_missing_uuids(g)
     if opt.verbose:
         for e in sorted(el.entries, key = lambda x: x.uuid):
-            print e
+            log('%s\n' % e)
     print el.save_commit(g, opt.branch,
                          msg='exported from mapi %r on %s'
                             % (fname, time.asctime()))

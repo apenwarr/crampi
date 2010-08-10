@@ -158,8 +158,8 @@ class Props(Mapi,BaseProps):
         # each prop is (pr_name, value)
         xprops = _lookup_custom_props_tuple(self.h, props)
         xprops = [(k,v) for k,v in xprops if v]
-        for k,v in xprops:
-            print repr(((propnames.get(k), k), v))
+        #for k,v in xprops:
+        #    print repr(((propnames.get(k), k), v))
         if xprops:
             self.h.SetProps(xprops)
 

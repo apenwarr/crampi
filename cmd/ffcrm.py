@@ -33,7 +33,7 @@ def main(argv):
     el.assign_missing_uuids(g)
     if opt.verbose:
         for e in sorted(el.entries, key = lambda x: x.uuid):
-            print e
+            log('%s\n' % e)
     print el.save_commit(g, opt.branch, 'exported from ffcrm %r' % opt.crmdb)
 
     if opt.merge:

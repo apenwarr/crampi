@@ -34,7 +34,7 @@ class Entry:
             bv = bd.get(k)
             ev = self.d.get(k)
             if av != bv and ev != bv:
-                print 'updating %r from %r to %r' % (k, ev, bv)
+                log('updating %r from %r to %r\n' % (k, ev, bv))
                 self.d[k] = bv
                 rd[k] = bv
         return rd
