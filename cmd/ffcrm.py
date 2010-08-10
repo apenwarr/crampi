@@ -37,10 +37,10 @@ def main(argv):
     print el.save_commit(g, opt.branch, 'exported from ffcrm %r' % opt.crmdb)
 
     if opt.merge:
-        merge.run(g, el, opt.branch, opt.merge, opt.verbose,
-                  add_contact = lambda d: ffcrm.add_contact(s, d),
-                  update_contact = lambda lid, d, changes: 
+        print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
+                        add_contact = lambda d: ffcrm.add_contact(s, d),
+                        update_contact = lambda lid, d, changes: 
                         ffcrm.update_contact(s, lid, d),
-                  commit_contacts = lambda: s.commit())
+                        commit_contacts = lambda: s.commit())
     
     g.flush()

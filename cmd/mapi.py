@@ -148,11 +148,11 @@ def main(argv):
                             % (fname, time.asctime()))
     
     if opt.merge:
-        merge.run(g, el, opt.branch, opt.merge, opt.verbose,
-                  add_contact = lambda d: add_contact(f, d),
-                  update_contact = lambda lid, d, changes: 
-                      update_contact(f, lid, d, changes),
-                  commit_contacts = lambda: None)
+        print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
+                        add_contact = lambda d: add_contact(f, d),
+                        update_contact = lambda lid, d, changes: 
+                        update_contact(f, lid, d, changes),
+                        commit_contacts = lambda: None)
     
     g.flush()
     

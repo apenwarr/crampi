@@ -36,6 +36,6 @@ def run(g, el, branch, merged_refname, verbose,
         if mode or verbose:
             print '%1s %s' % (mode, e)
     commit_contacts()
-    el.save_commit(g, branch, merged_commit=b_id,
-                   msg='merged from %s:%s..%s on %s'
-                   % (merged_refname, a_id, b_id, time.asctime()))
+    return el.save_commit(g, branch, merged_commit=b_id,
+                          msg='merged from %s:%s..%s on %s'
+                          % (merged_refname, a_id, b_id, time.asctime()))
