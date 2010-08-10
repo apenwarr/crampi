@@ -16,5 +16,5 @@ def main(argv):
     g = gitdb.GitDb(opt.gitdb)
     for r,ref,msg in reversed(list(g.commits(refname=None))):
         print '%-6d %-10s %s' % (r,ref,msg)
-        entry.load_tree_from_commit(g, r)
-        
+        el = entry.load_tree_from_commit(g, r)
+        el.reindex()

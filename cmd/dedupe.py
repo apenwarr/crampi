@@ -52,12 +52,13 @@ def main(argv):
         key = _keygen(e)
         srcdict[key] = e
 
+    edst.reindex()
     for e in edst.entries:
         if not e.lid:
             print 'barf: ', e
         key = _keygen(e)
         se = srcdict.get(key)
-        if key and se:
+        if key and se and not edst.uuids.get(se.uuid):
             print e.uuid, se.uuid
             del srcdict[key]  # max one mapping each
             e.uuid = se.uuid
