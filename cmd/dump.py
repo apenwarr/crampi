@@ -24,6 +24,12 @@ def main(argv):
     entries = entry.load_tree_from_commit(g, commitid)
 
     for e in entries.entries:
+        print e.uuid
         for k,v in sorted(e.d.items()):
-            print '%s: %r' % (k,v)
+            if isinstance(v, dict):
+                print '%s:' % k
+                for dk,dv in sorted(v.items()):
+                    print '    %s: %r' % (dk, dv)
+            else:
+                print '%s: %r' % (k,v)
         print
