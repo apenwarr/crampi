@@ -17,6 +17,7 @@ def run(g, el, branch, merged_refname, verbose,
         if ed == None: # add
             mode = 'A'
             assert(bd != None)
+            assert(uuid)
             lid = add_contact(bd)
             if lid:
                 e = entry.Entry(lid, uuid, bd)

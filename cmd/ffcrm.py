@@ -231,7 +231,7 @@ def main(argv):
         def do_load(el):
             el2 = entry.Entries(entries(s))
             el2.uuids_from_entrylist(el)
-            el2.assign_missing_uuids(g)
+            el2.assert_all_uuids()
             return el2
         print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
                         add_contact = lambda d: add_contact(s, d),

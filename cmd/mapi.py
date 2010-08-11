@@ -53,7 +53,8 @@ def _dnullify(d):
 
 
 def entries(f):
-    keys = [PR_ENTRYID] + _mapping.keys() + _admapping.keys()
+    keys = ([PR_ENTRYID, PR_LONGTERM_ENTRYID_FROM_TABLE] +
+            _mapping.keys() + _admapping.keys())
     for m in f.messages().iter(*keys):
         d = {}
         ad = {}
@@ -67,7 +68,9 @@ def entries(f):
         if filter(None, ad.values()):
             ad['type'] = 'Business'
             d['addr_biz'] = _dnullify(ad)
-        yield entry.Entry(m.get(PR_ENTRYID), None, _dnullify(d))
+        yield entry.Entry(m.get(PR_LONGTERM_ENTRYID_FROM_TABLE) 
+                          or m.get(PR_ENTRYID),
+                          None, _dnullify(d))
 
 
 def _displayname(last, first, company):
@@ -110,8 +113,9 @@ def add_contact(f, d):
                  (_fileas_prop, displayname))
     _setprops(msg, d)
     msg.save()
-    lid = msg[PR_ENTRYID]
+    lid = msg.get(PR_LONGTERM_ENTRYID_FROM_TABLE) or msg[PR_ENTRYID]
     assert(lid)
+    log('created contact: %r\n' % (str(lid).encode('hex'),))
     return lid
 
 
@@ -156,7 +160,7 @@ def main(argv):
         def do_load(el):
             el2 = entry.Entries(entries(f))
             el2.uuids_from_entrylist(el)
-            el2.assign_missing_uuids(g)
+            el2.assert_all_uuids()
             return el2
             
         print merge.run(g, el, opt.branch, opt.merge, opt.verbose,

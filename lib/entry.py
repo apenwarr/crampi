@@ -95,11 +95,19 @@ class Entries:
                 se = el.lids.get(e.lid)
                 if se:
                     e.uuid = se.uuid
+                else:
+                    log('not found: %r %s\n' % (str(e.lid).encode('hex'), e))
 
     def assign_missing_uuids(self, gdb):
         for e in self.entries:
             if not e.uuid:
                 e.uuid = gdb.uuid_new()
+
+    def assert_all_uuids(self):
+        for e in self.entries:
+            if not e.uuid:
+                log('error: %s\n' % e)
+            assert(e.uuid)
 
     def save_tree(self, gdb):
         blobs = {}
