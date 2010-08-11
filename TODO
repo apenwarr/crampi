@@ -1,31 +1,9 @@
 
 import/export
-.	rename *-export to *
-.	import base contacts into CRM
+	-n (--dry-run) option for ffcrm/mapi
 	import addresses into crm
-.	import modifications into crm
 	localtime/gmtime mixup
-	dump a branch to stdout
-	diff branches to stdout
-.	field-by-field merge instead of full object merge
-	after a merge, reread the modified entries to prevent invalid saves
 	do something about object deletions
 	notice databases that became completely empty
-	handle fresh databases that already contain duplicate objects
-	object renaming detection during export
-	import into outlook at all
-	import into (remote) sqlite without restarting
-	'sync' command that reads based on a config file
-	
-pw specific
-.	disable campaigns/leads
-	crm title bar
-
-ffcrm bugs
-	can't "rake db:create" on ruby 1.9.1: too many "not nulls" get set
-	set user_id correctly (or make sure a valid user_id=1 always exists?)
-	"rake crm:setup" doesn't work if set to approve users
-
-docs
-	basic tutorial
-	explain how data structures work
+		(and refuse to merge from them)
+	'sync' command that reads based on a config file?
