@@ -60,7 +60,7 @@ def entries(f):
             ad[kk] = m.get(k)
         if filter(None, ad.values()):
             ad['type'] = 'Business'
-            d['addresses'] = [ad]
+            d['addr_biz'] = ad
         yield entry.Entry(m.get(PR_ENTRYID), None, d)
 
 
@@ -77,7 +77,7 @@ def _displayname(last, first, company):
 
 def _setprops(msg, d):
     for k,v in d.items():
-        if k == 'addresses':
+        if k == 'addr_biz':
             continue
         pr = _mapping_r.get(k)
         #print 'updating: %r' % ((pr,k,v),)
@@ -87,13 +87,11 @@ def _setprops(msg, d):
             msg.setprops((_email_disp_prop, v))
         elif k == 'email2':
             msg.setprops((_email2_disp_prop, v))
-    adlist = d.get('addresses')
-    if adlist:
-        for k,v in adlist[0].items():
-            pr = _admapping_r.get(k)
-            #print 'ad_updating: %r' % ((pr,k,v),)
-            if pr:
-                msg.setprops((pr, v))
+    for k,v in d.get('addr_biz', {}).items():
+        pr = _admapping_r.get(k)
+        #print 'ad_updating: %r' % ((pr,k,v),)
+        if pr:
+            msg.setprops((pr, v))
 
 
 def add_contact(f, d):
