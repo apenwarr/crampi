@@ -56,11 +56,19 @@ def _dmap(d, *names):
     return [(d.get(n) or '') for n in names]
 
 
+def get_company(s, cname):
+    return selectone(s,
+                     'select id from accounts where name=?' +
+                     ' order by id desc ' +
+                     ' limit 1', [cname])
+    
+
 def get_or_add_company(s, cname):
-    userid = 1
-    now = datetime.datetime.now()
-    cid = selectone(s, 'select id from accounts where name=?', [cname])
-    if cname and not cid:
+    assert(cname)
+    cid = get_company(s, cname)
+    if not cid:
+        userid = 1
+        now = datetime.datetime.now()
         cid = s.execute('insert into accounts ' +
                         '  (name, access, ' + 
                         '   user_id, created_at, updated_at, deleted_at) ' +
@@ -73,7 +81,7 @@ def get_or_add_company(s, cname):
 def update_contact_company(s, id, cname):
     userid = 1
     now = datetime.datetime.now()
-    cid = get_or_add_company(s, cname)
+    cid = cname and get_or_add_company(s, cname) or None
     old_cid = selectone(s, 'select account_id from account_contacts ' +
                         '  where contact_id=? and deleted_at is null ' +
                         '  order by id desc',
@@ -86,6 +94,57 @@ def update_contact_company(s, id, cname):
                       '   created_at, updated_at, deleted_at) ' +
                       ' values ' +
                       '  (?,?, ?,?,?)', [cid, id, now, now, None])
+
+
+def get_address(s, lid, addrtype):
+    return selectone(s,
+                     'select id from addresses ' +
+                     ' where addressable_id=? ' +
+                     '   and addressable_type="Contact" ' +
+                     '   and address_type=? ' +
+                     '   and deleted_at is null ' +
+                     '   order by id desc ' +
+                     '   limit 1', [lid, addrtype])
+    
+
+def get_or_add_address(s, lid, addrtype):
+    assert(lid)
+    assert(addrtype)
+    aid = get_address(s, lid, addrtype)
+    if not aid:
+        now = datetime.datetime.now()
+        aid = s.execute('insert into addresses ' +
+                        '  (address_type, ' +
+                        '   addressable_id, addressable_type, ' +
+                        '   created_at, updated_at, deleted_at) ' +
+                        ' values ' +
+                        '  (?,?,"Contact", ?,?,?)',
+                        [addrtype, lid, now, now, None]).lastrowid
+    return aid
+
+
+def update_contact_bizaddress(s, id, ad):
+    userid = 1
+    now = datetime.datetime.now()
+    if not ad:
+        aid = get_address(s, id, 'Business')
+        if aid:
+            s.execute('update addresses ' +
+                      '  set deleted_at=? ' +
+                      '  where id=?', [now, aid])
+    else:
+        aid = get_or_add_address(s, id, 'Business')
+        assert(aid)
+        s.execute('update addresses ' +
+                  '  set street1=?, street2=?, ' +
+                  '      city=?, state=?, zipcode=?, ' +
+                  '      country=?, full_address=?, ' +
+                  '      updated_at=? ' +
+                  '  where id=? ',
+                  [ad.get('street1'), ad.get('street2'),
+                   ad.get('city'), ad.get('state'), ad.get('zip'),
+                   ad.get('country'), ad.get('fulladdress'),
+                   now, aid])
 
 
 def add_contact(s, d):
@@ -102,6 +161,7 @@ def add_contact(s, d):
                          'email', 'email2', 'phone', 'mobile', 'fax',
                          'web', 'birthdate') + [userid,now,now,None]).lastrowid
     update_contact_company(s, id, d.get('company'))
+    update_contact_bizaddress(s, id, d.get('addr_biz'))
     return id
 
 
@@ -125,11 +185,12 @@ def update_contact(s, lid, d):
     setv = [now]
     for (dk,sk) in kv.items():
         setk.append(sk)
-        setv.append(d.get(dk))
+        setv.append(d.get(dk) or '')
     q = 'update contacts set %s where id=?' % (', '.join('%s=?' % k
                                                          for k in setk))
     s.execute(q, setv + [lid])
     update_contact_company(s, lid, d.get('company'))
+    update_contact_bizaddress(s, lid, d.get('addr_biz'))
 
 
 def main(argv):
