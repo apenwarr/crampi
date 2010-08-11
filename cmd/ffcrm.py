@@ -41,15 +41,23 @@ def entries(s):
                  addr_biz=None, company=None)
         for (street1, street2, city, state, zip, country,
              fullad, adtype) in s.execute(aq, [lid]):
-            d['addr_biz'] = dict(street1=street1,
-                                   street2=street2,
-                                   city=city, state=state,
-                                   zip=zip, country=country,
-                                   fulladdress=fullad,
-                                   type=adtype)
+            d['addr_biz'] = _dnullify(dict(street1=street1,
+                                           street2=street2,
+                                           city=city, state=state,
+                                           zip=zip, country=country,
+                                           fulladdress=fullad,
+                                           type=adtype))
         for (cname,) in s.execute(cq, [lid]):
             d['company'] = cname
-        yield entry.Entry(lid, None, d)
+        
+        yield entry.Entry(lid, None, _dnullify(d))
+
+
+def _dnullify(d):
+    for k in d.keys():
+        if not d[k]:
+            del d[k]
+    return d
 
 
 def _dmap(d, *names):

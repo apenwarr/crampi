@@ -45,6 +45,12 @@ _admapping = {
 _mapping_r = dict((v,k) for k,v in _mapping.items())
 _admapping_r = dict((v,k) for k,v in _admapping.items())
 
+def _dnullify(d):
+    for k in d.keys():
+        if not d[k]:
+            del d[k]
+    return d
+
 
 def entries(f):
     keys = [PR_ENTRYID] + _mapping.keys() + _admapping.keys()
@@ -60,8 +66,8 @@ def entries(f):
             ad[kk] = m.get(k)
         if filter(None, ad.values()):
             ad['type'] = 'Business'
-            d['addr_biz'] = ad
-        yield entry.Entry(m.get(PR_ENTRYID), None, d)
+            d['addr_biz'] = _dnullify(ad)
+        yield entry.Entry(m.get(PR_ENTRYID), None, _dnullify(d))
 
 
 def _displayname(last, first, company):

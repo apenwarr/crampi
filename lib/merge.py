@@ -14,9 +14,9 @@ def run(g, el, branch, merged_refname, verbose,
     for (lid,uuid,ed,ad,bd) in entry.merge(el, a, b):
         d = None
         e = None
-        if not ed: # add
+        if ed == None: # add
             mode = 'A'
-            assert(bd)
+            assert(bd != None)
             lid = add_contact(bd)
             if lid:
                 e = entry.Entry(lid, uuid, bd)
