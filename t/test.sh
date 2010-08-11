@@ -49,6 +49,8 @@ WVPASSEQ "$(crampi log c2 | wc -l)" "2"
 WVSTART "trivial merge"
 WVPASS crampi ffcrm -b ce ce.tmp -m c1
 WVPASSEQ "$(crampi diff c1 ce)" ""
+WVPASS crampi ffcrm -b ce ce.tmp
+WVPASSEQ "$(crampi diff c1 ce)" ""
 
 WVSTART "fake merge"
 WVPASS crampi fake-merge -b ce2 -m c1
