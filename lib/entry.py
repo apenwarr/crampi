@@ -88,6 +88,14 @@ class Entries:
                 if not e.uuid:
                     e.uuid = localids.get(e.lid)
 
+    def uuids_from_entrylist(self, el):
+        el.reindex()
+        for e in self.entries:
+            if not e.uuid:
+                se = el.lids.get(e.lid)
+                if se:
+                    e.uuid = se.uuid
+
     def assign_missing_uuids(self, gdb):
         for e in self.entries:
             if not e.uuid:

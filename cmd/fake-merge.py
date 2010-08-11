@@ -31,5 +31,6 @@ def main(argv):
     print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
                     add_contact = lambda d: None,
                     update_contact = lambda lid, d, changes: None,
-                    commit_contacts = lambda: None)
+                    commit_contacts = lambda: None,
+                    reload_entrylist = lambda el: el)
     g.flush()

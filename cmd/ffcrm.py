@@ -220,10 +220,16 @@ def main(argv):
     print el.save_commit(g, opt.branch, 'exported from ffcrm %r' % opt.crmdb)
 
     if opt.merge:
+        def do_load(el):
+            el2 = entry.Entries(entries(s))
+            el2.uuids_from_entrylist(el)
+            el2.assign_missing_uuids(g)
+            return el2
         print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
                         add_contact = lambda d: add_contact(s, d),
                         update_contact = lambda lid, d, changes: 
                              update_contact(s, lid, d),
-                        commit_contacts = lambda: s.commit())
+                        commit_contacts = lambda: s.commit(),
+                        reload_entrylist = do_load)
     
     g.flush()

@@ -147,11 +147,18 @@ def main(argv):
                             % (fname, time.asctime()))
     
     if opt.merge:
+        def do_load(el):
+            el2 = entry.Entries(entries(f))
+            el2.uuids_from_entrylist(el)
+            el2.assign_missing_uuids(g)
+            return el2
+            
         print merge.run(g, el, opt.branch, opt.merge, opt.verbose,
                         add_contact = lambda d: add_contact(f, d),
                         update_contact = lambda lid, d, changes: 
-                        update_contact(f, lid, d, changes),
-                        commit_contacts = lambda: None)
+                             update_contact(f, lid, d, changes),
+                        commit_contacts = lambda: None,
+                        reload_entrylist = do_load)
     
     g.flush()
     

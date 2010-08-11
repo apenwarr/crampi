@@ -3,7 +3,7 @@ from lib import entry
 
 
 def run(g, el, branch, merged_refname, verbose,
-        add_contact, update_contact, commit_contacts):
+        add_contact, update_contact, commit_contacts, reload_entrylist):
     a_id = g.commitid_lastmerge(refname=branch,
                                 merged_refname=merged_refname)
     b_id = g.commitid_latest(merged_refname)
@@ -37,6 +37,7 @@ def run(g, el, branch, merged_refname, verbose,
         if mode or verbose:
             print '%1s %s' % (mode, e)
     commit_contacts()
+    el = reload_entrylist(el)
     return el.save_commit(g, branch, merged_commit=b_id,
                           msg='merged from %s:%s..%s on %s'
                           % (merged_refname, a_id, b_id, time.asctime()))
